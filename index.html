@@ -98,6 +98,7 @@
 
   <div id="f1040"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="engine.web.js"></script>
 <script>
 (function(){
@@ -197,9 +198,10 @@
     var warns=(r.warnings||[]).map(function(w){return '<div class="warn">'+w+'</div>';}).join("");
     return '<h2>Review &amp; save</h2><table><tbody>'+rows+'</tbody></table>'+warns+
       '<div class="actions noprint" style="gap:10px;justify-content:flex-start;flex-wrap:wrap">'+
-      '<button class="btn" onclick="window.__print1040&&window.__print1040()">Official Form 1040 (print / save PDF)</button>'+
+      '<button class="btn" id="dlIRS" onclick="window.__downloadIRS1040&&window.__downloadIRS1040(this)">Download filled IRS Form 1040 (PDF)</button>'+
+      '<button class="btn ghost" onclick="window.__print1040&&window.__print1040()">Print view</button>'+
       '<button class="btn ghost" onclick="window.print()">Summary PDF</button></div>'+
-      '<div class="note">Generate your return in the <b>official IRS Form 1040 format</b> (2025), filled with your figures — then Save as PDF from the print dialog. Figures are for your review; verify against source documents before filing. This tool does not e-file.</div>';
+      '<div class="note">Download the <b>official IRS Form 1040 (2025)</b> filled with your figures — the genuine government PDF, ready to review, print, or e-file yourself. Figures are for your review; verify against your source documents before filing. This tool does not e-file for you.</div>';
   }
 
   function bind(){
@@ -336,6 +338,84 @@
     document.getElementById("f1040").innerHTML=bar+page1+page2;
     document.body.classList.add("show1040");
     window.scrollTo(0,0);
+  };
+
+  // ---- Fill the OFFICIAL IRS Form 1040 (2025) PDF, client-side ----
+  // Field map verified by rendering the real f1040-2025.pdf. All names carry the
+  // "[0]" suffix. Money lines, identity, and filing status confirmed on-page.
+  var P1="topmostSubform[0].Page1[0].", P2="topmostSubform[0].Page2[0].";
+  function m1040(n){ return n ? Math.round(n).toString() : ""; }
+  window.__downloadIRS1040=async function(btn){
+    if(typeof PDFLib==="undefined"){ alert("PDF library still loading — try again in a moment."); return; }
+    var label = btn ? btn.textContent : "";
+    if(btn){ btn.textContent="Generating…"; btn.disabled=true; }
+    try{
+      var inp=toInput(); var r=TaxEngine.computeTax(inp);
+      var bytes=await fetch("f1040-2025.pdf").then(function(x){return x.arrayBuffer();});
+      var doc=await PDFLib.PDFDocument.load(bytes);
+      var form=doc.getForm();
+      var set=function(name,val){ if(val===""||val==null)return; try{form.getTextField(name+"[0]").setText(String(val));}catch(e){} };
+      var check=function(name){ try{form.getCheckBox(name).check();}catch(e){} };
+
+      set(P1+"f1_14",((f.firstName||"")).trim());
+      set(P1+"f1_15",((f.lastName||"")).trim());
+      var fsMap={single:"Checkbox_ReadOrder[0].c1_8[0]",married_jointly:"Checkbox_ReadOrder[0].c1_8[1]",
+        married_separately:"Checkbox_ReadOrder[0].c1_8[2]",head_of_household:"c1_8[0]",qualifying_surviving_spouse:"c1_8[1]"};
+      check(P1+fsMap[inp.filingStatus]);
+
+      var wages=Number(inp.wages)||0;
+      var cap=(Number(inp.netLongTermCapitalGains)||0)+(Number(inp.netShortTermCapitalGains)||0);
+      var sch1=(Number(inp.selfEmploymentNetProfit)||0)+(Number(inp.otherIncome)||0);
+      set(P1+"f1_47",m1040(wages)); set(P1+"f1_57",m1040(wages));
+      set(P1+"f1_59",m1040(Number(inp.taxableInterest)||0));
+      set(P1+"f1_60",m1040(Number(inp.qualifiedDividends)||0));
+      set(P1+"f1_61",m1040(Number(inp.ordinaryDividends)||0));
+      set(P1+"f1_66",m1040(Number(inp.retirementDistributions)||0));
+      set(P1+"f1_69",m1040(Number(inp.taxableSocialSecurity)||0));
+      set(P1+"f1_70",m1040(cap));
+      set(P1+"f1_72",m1040(sch1));
+      set(P1+"f1_73",m1040(r.totalIncome));
+      set(P1+"f1_74",m1040(r.adjustmentsToIncome));
+      set(P1+"f1_75",m1040(r.adjustedGrossIncome));
+
+      var add13b=r.seniorDeduction+r.tipsDeduction+r.overtimeDeduction;
+      var line14=r.deductionTaken+r.qbiDeduction+add13b;
+      var credits19=r.childTaxCredit+r.otherDependentCredit;
+      var line22=Math.max(0,r.tentativeTax-credits19);
+      var otherTax=r.selfEmploymentTax+r.additionalMedicareTax+r.netInvestmentIncomeTax;
+      var otherPay=r.earnedIncomeCredit+r.additionalChildTaxCredit;
+      var wh=Number(inp.federalWithholding)||0;
+      set(P2+"f2_01",m1040(r.adjustedGrossIncome));
+      set(P2+"f2_02",m1040(r.deductionTaken));
+      set(P2+"f2_03",m1040(r.qbiDeduction));
+      set(P2+"f2_04",m1040(add13b));
+      set(P2+"f2_05",m1040(line14));
+      set(P2+"f2_06",m1040(r.taxableIncome));
+      set(P2+"f2_08",m1040(r.tentativeTax));
+      set(P2+"f2_10",m1040(r.tentativeTax));
+      set(P2+"f2_11",m1040(credits19));
+      set(P2+"f2_13",m1040(credits19));
+      set(P2+"f2_14",m1040(line22));
+      set(P2+"f2_15",m1040(otherTax));
+      set(P2+"f2_16",m1040(r.totalTax));
+      set(P2+"f2_17",m1040(wh)); set(P2+"f2_20",m1040(wh));
+      set(P2+"f2_21",m1040(Number(inp.estimatedPayments)||0));
+      set(P2+"f2_23",m1040(r.earnedIncomeCredit));
+      set(P2+"f2_24",m1040(r.additionalChildTaxCredit));
+      set(P2+"f2_28",m1040(otherPay));
+      set(P2+"f2_29",m1040(r.totalPayments));
+      if(r.refundOwed>=0){ set(P2+"f2_30",m1040(r.refundOwed)); set(P2+"f2_31",m1040(r.refundOwed)); }
+      else set(P2+"f2_35",m1040(-r.refundOwed));
+
+      form.updateFieldAppearances();
+      var out=await doc.save();
+      var blob=new Blob([out],{type:"application/pdf"});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a");
+      a.href=url; a.download="Form-1040-2025-filled.pdf"; a.click();
+      URL.revokeObjectURL(url);
+    }catch(e){ alert("Could not generate the IRS PDF: "+e.message); }
+    finally{ if(btn){ btn.textContent=label; btn.disabled=false; } }
   };
 
   render();

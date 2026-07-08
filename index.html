@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TaxFile Pro — 2025 Tax Calculator</title>
+<style>
+  :root{--navy:#17284f;--accent:#21806b;--accent2:#2aa085;--bg:#f6f8fb;--card:#fff;--ink:#1c2333;--muted:#5b6472;--line:#e4e9f0;--danger:#b23030;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:16px 26px;background:var(--navy);color:#fff}
+  .nav .brand{font-weight:700;font-size:18px}
+  .nav .tag{font-size:12px;color:#a9bbe0}
+  .wrap{max-width:1040px;margin:0 auto;padding:26px 20px}
+  .steps{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+  .pill{font-size:12px;padding:6px 12px;border-radius:999px;background:#eef2f8;color:var(--muted);border:1px solid var(--line);cursor:pointer}
+  .pill.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .pill.done{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .grid{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+  h2{margin:0 0 16px;color:var(--navy);font-size:20px}
+  .field{margin-bottom:14px}
+  label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+  label .hint{font-weight:400;color:var(--muted)}
+  input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:15px;background:#fff;color:var(--ink)}
+  input:focus,select:focus{outline:2px solid var(--accent2);border-color:var(--accent2)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .chk{display:flex;align-items:center;gap:8px;font-size:14px;margin:8px 0}
+  .chk input{width:auto}
+  .btn{display:inline-block;background:var(--accent);color:#fff;padding:11px 20px;border-radius:9px;font-weight:600;font-size:15px;border:none;cursor:pointer}
+  .btn:hover{background:var(--accent2)}
+  .btn.ghost{background:transparent;color:var(--navy);border:1px solid var(--line)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .actions{display:flex;justify-content:space-between;margin-top:20px}
+  .summary{position:sticky;top:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .summary h3{margin:0 0 10px;color:var(--navy)}
+  .big{font-size:30px;font-weight:800}
+  .big.refund{color:var(--accent)}.big.owed{color:var(--danger)}
+  .line{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px dashed var(--line)}
+  .line span:first-child{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  td{padding:4px 0}
+  td.ln{color:var(--muted);width:52px}
+  td.amt{text-align:right}
+  tr.emph td{font-weight:700;color:var(--navy)}
+  .warn{background:#fff7e6;border:1px solid #ffe0a3;color:#7a5200;padding:10px 12px;border-radius:9px;font-size:13px;margin-top:10px}
+  .note{background:#eef6ff;border:1px solid #cfe4ff;color:#1b4b7a;padding:12px 14px;border-radius:10px;font-size:13px;margin-top:16px}
+  .disc{font-size:12px;color:var(--muted);margin-top:20px;border-top:1px solid var(--line);padding-top:14px}
+  @media print{.nav,.steps,.actions,.summary,.noprint{display:none!important}.grid{display:block}.card{border:none;padding:0}}
+</style>
+</head>
+<body>
+  <div class="nav">
+    <div class="brand">TaxFile Pro</div>
+    <div class="tag">2025 federal tax year · runs entirely in your browser</div>
+  </div>
+
+  <div class="wrap">
+    <div class="steps" id="steps"></div>
+    <div class="grid">
+      <div class="card" id="panel"></div>
+      <div class="summary" id="summary"></div>
+    </div>
+  </div>
+
+<script src="engine.web.js"></script>
+<script>
+(function(){
+  var STEPS=["About you","Income","Deductions","Payments","Review"];
+  var step=0;
+  var f={
+    firstName:"",lastName:"",filingStatus:"single",taxpayerAge65OrOlder:false,
+    numChildrenCTC:0,numOtherDependents:0,
+    wages:"",taxableInterest:"",ordinaryDividends:"",qualifiedDividends:"",
+    netLongTermCapitalGains:"",retirementDistributions:"",selfEmploymentNetProfit:"",
+    qualifiedBusinessIncome:"",qualifiedTips:"",qualifiedOvertime:"",
+    deductionMethod:"auto",stateAndLocalTaxes:"",mortgageInterest:"",charitableContributions:"",
+    federalWithholding:"",estimatedPayments:""
+  };
+  var el=function(id){return document.getElementById(id);};
+  var n=function(s){s=(""+s).trim();return s===""?undefined:Number(s);};
+  var usd=function(v,d){return (v||0).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:(d==null?0:d)});};
+
+  function toInput(){
+    var deps=[];
+    for(var i=0;i<f.numChildrenCTC;i++)deps.push({qualifiesForCTC:true,qualifiesForODC:false});
+    for(var j=0;j<f.numOtherDependents;j++)deps.push({qualifiesForCTC:false,qualifiesForODC:true});
+    return {
+      filingStatus:f.filingStatus,taxpayerAge65OrOlder:f.taxpayerAge65OrOlder,dependents:deps,
+      wages:n(f.wages),taxableInterest:n(f.taxableInterest),ordinaryDividends:n(f.ordinaryDividends),
+      qualifiedDividends:n(f.qualifiedDividends),netLongTermCapitalGains:n(f.netLongTermCapitalGains),
+      retirementDistributions:n(f.retirementDistributions),selfEmploymentNetProfit:n(f.selfEmploymentNetProfit),
+      qualifiedBusinessIncome:n(f.qualifiedBusinessIncome),qualifiedTips:n(f.qualifiedTips),
+      qualifiedOvertime:n(f.qualifiedOvertime),
+      deductionMethod:f.deductionMethod==="auto"?undefined:f.deductionMethod,
+      itemized:{stateAndLocalTaxes:n(f.stateAndLocalTaxes),mortgageInterest:n(f.mortgageInterest),charitableContributions:n(f.charitableContributions)},
+      federalWithholding:n(f.federalWithholding),estimatedPayments:n(f.estimatedPayments)
+    };
+  }
+
+  function field(label,key,opts){
+    opts=opts||{};
+    var type=opts.type||"number";
+    return '<div class="field"><label>'+label+'</label>'+
+      '<input data-key="'+key+'" type="'+type+'" '+(type==="number"?'min="0" inputmode="decimal" placeholder="0"':'')+' value="'+(f[key]!=null?String(f[key]).replace(/"/g,"&quot;"):"")+'"></div>';
+  }
+
+  function renderSteps(){
+    el("steps").innerHTML=STEPS.map(function(s,i){
+      var cls=i===step?"active":i<step?"done":"";
+      return '<span class="pill '+cls+'" data-step="'+i+'">'+(i+1)+". "+s+"</span>";
+    }).join("");
+    Array.prototype.forEach.call(el("steps").querySelectorAll(".pill"),function(p){
+      p.onclick=function(){step=Number(p.getAttribute("data-step"));render();};
+    });
+  }
+
+  function panelHtml(){
+    if(step===0){
+      return '<h2>About you</h2>'+
+        '<div class="row">'+field("First name","firstName",{type:"text"})+field("Last name","lastName",{type:"text"})+'</div>'+
+        '<div class="field"><label>Filing status</label><select data-key="filingStatus">'+
+        ['single|Single','married_jointly|Married filing jointly','married_separately|Married filing separately','head_of_household|Head of household','qualifying_surviving_spouse|Qualifying surviving spouse']
+          .map(function(o){var p=o.split("|");return '<option value="'+p[0]+'"'+(f.filingStatus===p[0]?" selected":"")+'>'+p[1]+'</option>';}).join("")+
+        '</select></div>'+
+        '<label class="chk"><input type="checkbox" data-key="taxpayerAge65OrOlder"'+(f.taxpayerAge65OrOlder?" checked":"")+'> I am 65 or older (unlocks the 2025 senior deduction)</label>'+
+        '<div class="row">'+field('Children (Child Tax Credit) <span class="hint">under 17</span>',"numChildrenCTC")+field('Other dependents <span class="hint">$500 each</span>',"numOtherDependents")+'</div>';
+    }
+    if(step===1){
+      return '<h2>Income</h2>'+
+        field("Wages (W-2 box 1)","wages")+
+        field("Taxable interest","taxableInterest")+
+        '<div class="row">'+field("Ordinary dividends","ordinaryDividends")+field("Qualified dividends","qualifiedDividends")+'</div>'+
+        field("Net long-term capital gains","netLongTermCapitalGains")+
+        field("Retirement / IRA distributions (taxable)","retirementDistributions")+
+        field("Self-employment net profit (Schedule C)","selfEmploymentNetProfit")+
+        field("Qualified business income (for §199A)","qualifiedBusinessIncome")+
+        '<div class="row">'+field("Qualified tips (2025 deduction)","qualifiedTips")+field("Qualified overtime (2025 deduction)","qualifiedOvertime")+'</div>';
+    }
+    if(step===2){
+      return '<h2>Deductions</h2>'+
+        '<div class="field"><label>Deduction method</label><select data-key="deductionMethod">'+
+        ['auto|Optimize for me (recommended)','standard|Standard deduction','itemized|Itemize']
+          .map(function(o){var p=o.split("|");return '<option value="'+p[0]+'"'+(f.deductionMethod===p[0]?" selected":"")+'>'+p[1]+'</option>';}).join("")+
+        '</select></div>'+
+        '<p style="font-size:13px;color:var(--muted)">Enter itemized amounts; when set to optimize we use whichever is larger.</p>'+
+        field("State &amp; local taxes (SALT, capped $10k)","stateAndLocalTaxes")+
+        field("Home mortgage interest","mortgageInterest")+
+        field("Charitable contributions","charitableContributions");
+    }
+    if(step===3){
+      return '<h2>Payments</h2>'+
+        field("Federal income tax withheld (W-2 box 2)","federalWithholding")+
+        field("Estimated tax payments","estimatedPayments");
+    }
+    // Review
+    var r=TaxEngine.computeTax(toInput());
+    var emph={"9":1,"11":1,"15":1,"16":1,"22":1,"33":1,"34":1,"37":1};
+    var rows=r.lineItems.map(function(li){
+      return '<tr class="'+(emph[li[0]]?"emph":"")+'"><td class="ln">'+li[0]+'</td><td>'+li[1]+'</td><td class="amt">'+usd(li[2],2)+'</td></tr>';
+    }).join("");
+    var warns=(r.warnings||[]).map(function(w){return '<div class="warn">'+w+'</div>';}).join("");
+    return '<h2>Review &amp; save</h2><table><tbody>'+rows+'</tbody></table>'+warns+
+      '<div class="actions noprint"><span></span><button class="btn" onclick="window.print()">Print / Save as PDF</button></div>'+
+      '<div class="note">This is your finished 1040 estimate. Use <b>Print / Save as PDF</b> to keep a professional copy. Figures are for your review — verify against source documents before filing. This tool does not e-file.</div>';
+  }
+
+  function bind(){
+    Array.prototype.forEach.call(el("panel").querySelectorAll("[data-key]"),function(inp){
+      var key=inp.getAttribute("data-key");
+      var ev=(inp.type==="checkbox")?"change":"input";
+      inp.addEventListener(ev,function(){
+        if(inp.type==="checkbox")f[key]=inp.checked;
+        else if(inp.type==="number")f[key]=inp.value===""?"":(key.indexOf("num")===0?Number(inp.value):inp.value);
+        else f[key]=inp.value;
+        renderSummary();
+      });
+    });
+  }
+
+  function renderSummary(){
+    var r=TaxEngine.computeTax(toInput());
+    var refund=r.refundOwed>=0;
+    el("summary").innerHTML='<h3>Live 2025 estimate</h3>'+
+      '<div class="big '+(refund?"refund":"owed")+'">'+usd(Math.abs(r.refundOwed))+'</div>'+
+      '<div style="color:var(--muted);font-size:13px;margin-bottom:12px">'+(refund?"Estimated refund":"Estimated balance due")+'</div>'+
+      line("Total income",r.totalIncome)+line("AGI",r.adjustedGrossIncome)+
+      line("Deduction ("+r.deductionMethodUsed+")",r.deductionTaken)+
+      line("Taxable income",r.taxableIncome)+line("Total tax",r.totalTax)+
+      line("Effective rate",(r.effectiveRate*100).toFixed(1)+"%",true)+
+      line("Marginal rate",(r.marginalRate*100).toFixed(0)+"%",true);
+  }
+  function line(a,b,raw){return '<div class="line"><span>'+a+'</span><span>'+(raw?b:usd(b))+'</span></div>';}
+
+  function render(){
+    renderSteps();
+    var showNext=step<STEPS.length-1;
+    el("panel").innerHTML=panelHtml()+
+      '<div class="actions noprint">'+
+      '<button class="btn ghost" id="back"'+(step===0?" disabled":"")+'>&larr; Back</button>'+
+      (showNext?'<button class="btn" id="next">Next &rarr;</button>':'<span></span>')+
+      '</div>';
+    bind();
+    var b=el("back"),nx=el("next");
+    if(b)b.onclick=function(){if(step>0){step--;render();}};
+    if(nx)nx.onclick=function(){if(step<STEPS.length-1){step++;render();}};
+    renderSummary();
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

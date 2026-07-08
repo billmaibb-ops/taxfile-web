@@ -48,6 +48,38 @@
   .note{background:#eef6ff;border:1px solid #cfe4ff;color:#1b4b7a;padding:12px 14px;border-radius:10px;font-size:13px;margin-top:16px}
   .disc{font-size:12px;color:var(--muted);margin-top:20px;border-top:1px solid var(--line);padding-top:14px}
   @media print{.nav,.steps,.actions,.summary,.noprint{display:none!important}.grid{display:block}.card{border:none;padding:0}}
+
+  /* Official Form 1040 replica */
+  #f1040{display:none;position:fixed;inset:0;background:#fff;overflow:auto;z-index:9999;padding:0}
+  body.show1040 #f1040{display:block}
+  body.show1040 .nav,body.show1040 .wrap{display:none}
+  .f1040-bar{position:sticky;top:0;background:var(--navy);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px 18px}
+  .f1040-bar button{margin-left:10px}
+  .page1040{max-width:760px;margin:16px auto;background:#fff;color:#000;padding:26px 30px;font-family:"Times New Roman",Georgia,serif;font-size:12px}
+  .f-head{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px}
+  .f-head .t{font-size:20px;font-weight:700}
+  .f-head .sub{font-size:11px}
+  .f-omb{text-align:right;font-size:10px}
+  .f-row{display:flex;border-bottom:1px solid #999;padding:2px 0;align-items:flex-start}
+  .f-row .no{width:34px;font-weight:700;flex:none}
+  .f-row .lab{flex:1;padding-right:8px}
+  .f-row .amt{width:120px;text-align:right;border-left:1px solid #ccc;padding-left:6px;font-variant-numeric:tabular-nums}
+  .f-sec{background:#e9eef5;font-weight:700;padding:3px 4px;margin-top:10px;border-top:2px solid #000}
+  .f-id{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0}
+  .f-id div{font-size:12px}
+  .f-id b{display:block;font-size:10px;color:#333;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .f-status{margin:6px 0;font-size:12px}
+  .f-status .box{display:inline-block;border:1.5px solid #000;width:12px;height:12px;text-align:center;line-height:11px;margin-right:4px;vertical-align:middle;font-weight:700}
+  .f-note{font-size:10px;color:#444;margin-top:14px;border-top:1px solid #000;padding-top:6px}
+  .f-pg{text-align:center;font-size:10px;color:#555;margin-top:10px}
+  @media print{
+    .f1040-bar{display:none!important}
+    body.show1040 *{visibility:hidden}
+    body.show1040 #f1040,body.show1040 #f1040 *{visibility:visible}
+    #f1040{position:absolute;overflow:visible}
+    .page1040{margin:0 auto;page-break-after:always}
+    @page{size:letter;margin:0.5in}
+  }
 </style>
 </head>
 <body>
@@ -63,6 +95,8 @@
       <div class="summary" id="summary"></div>
     </div>
   </div>
+
+  <div id="f1040"></div>
 
 <script src="engine.web.js"></script>
 <script>
@@ -162,8 +196,10 @@
     }).join("");
     var warns=(r.warnings||[]).map(function(w){return '<div class="warn">'+w+'</div>';}).join("");
     return '<h2>Review &amp; save</h2><table><tbody>'+rows+'</tbody></table>'+warns+
-      '<div class="actions noprint"><span></span><button class="btn" onclick="window.print()">Print / Save as PDF</button></div>'+
-      '<div class="note">This is your finished 1040 estimate. Use <b>Print / Save as PDF</b> to keep a professional copy. Figures are for your review — verify against source documents before filing. This tool does not e-file.</div>';
+      '<div class="actions noprint" style="gap:10px;justify-content:flex-start;flex-wrap:wrap">'+
+      '<button class="btn" onclick="window.__print1040&&window.__print1040()">Official Form 1040 (print / save PDF)</button>'+
+      '<button class="btn ghost" onclick="window.print()">Summary PDF</button></div>'+
+      '<div class="note">Generate your return in the <b>official IRS Form 1040 format</b> (2025), filled with your figures — then Save as PDF from the print dialog. Figures are for your review; verify against source documents before filing. This tool does not e-file.</div>';
   }
 
   function bind(){
@@ -207,6 +243,100 @@
     if(nx)nx.onclick=function(){if(step<STEPS.length-1){step++;render();}};
     renderSummary();
   }
+
+  // ---- Official IRS Form 1040 (2025) renderer ----
+  function frow(no,lab,amt,strong){
+    var a = amt===""||amt==null ? "" : usd(amt,0);
+    return '<div class="f-row"'+(strong?' style="font-weight:700"':'')+'>'+
+      '<div class="no">'+no+'</div><div class="lab">'+lab+'</div><div class="amt">'+a+'</div></div>';
+  }
+  function statusBoxes(sel){
+    var opts=[["single","Single"],["married_jointly","Married filing jointly"],
+      ["married_separately","Married filing separately"],["head_of_household","Head of household"],
+      ["qualifying_surviving_spouse","Qualifying surviving spouse"]];
+    return opts.map(function(o){
+      return '<span style="margin-right:14px"><span class="box">'+(o[0]===sel?"X":"")+'</span>'+o[1]+'</span>';
+    }).join("");
+  }
+  window.__close1040=function(){document.body.classList.remove("show1040");window.scrollTo(0,0);};
+  window.__print1040=function(){
+    var inp=toInput(); var r=TaxEngine.computeTax(inp);
+    var name=((f.firstName||"")+" "+(f.lastName||"")).trim();
+    var wages=Number(inp.wages)||0, interest=Number(inp.taxableInterest)||0;
+    var qDiv=Number(inp.qualifiedDividends)||0, oDiv=Number(inp.ordinaryDividends)||0;
+    var ltcg=Number(inp.netLongTermCapitalGains)||0;
+    var retire=Number(inp.retirementDistributions)||0;
+    var seProfit=Number(inp.selfEmploymentNetProfit)||0;
+    var wh=Number(inp.federalWithholding)||0, est=Number(inp.estimatedPayments)||0;
+    var credits19=r.childTaxCredit+r.otherDependentCredit;
+    var line22=Math.max(0,r.tentativeTax-credits19);
+    var otherTax=r.selfEmploymentTax+r.additionalMedicareTax+r.netInvestmentIncomeTax;
+    var otherPay=r.earnedIncomeCredit+r.additionalChildTaxCredit;
+
+    var bar='<div class="f1040-bar noprint">'+
+      '<div>Official IRS Form 1040 · Tax year 2025</div>'+
+      '<div><button class="btn" onclick="window.print()">Print / Save as PDF</button>'+
+      '<button class="btn ghost" style="color:#fff;border-color:#4a5d8f" onclick="window.__close1040()">Close</button></div></div>';
+
+    var page1='<div class="page1040">'+
+      '<div class="f-head"><div><div class="t">Form 1040</div>'+
+        '<div class="sub">U.S. Individual Income Tax Return</div></div>'+
+        '<div class="f-omb"><div style="font-size:18px;font-weight:700">2025</div>'+
+        'Dept. of the Treasury — IRS<br>OMB No. 1545-0074</div></div>'+
+      '<div class="f-id"><div><b>Name</b>'+(name||"&nbsp;")+'</div>'+
+        '<div><b>Social security number</b>___-__-____</div></div>'+
+      '<div class="f-status"><b style="display:block;font-size:10px;text-transform:uppercase">Filing Status</b>'+
+        statusBoxes(inp.filingStatus)+'</div>'+
+      frow("1a","Total amount from Form(s) W-2, box 1",wages)+
+      frow("1z","Total wages",wages)+
+      frow("2b","Taxable interest",interest)+
+      frow("3a","Qualified dividends",qDiv)+
+      frow("3b","Ordinary dividends",oDiv)+
+      frow("5b","Pensions, annuities, and IRA distributions (taxable)",retire)+
+      frow("6b","Taxable Social Security benefits",Number(inp.taxableSocialSecurity)||0)+
+      frow("7","Capital gain or (loss)",ltcg+(Number(inp.netShortTermCapitalGains)||0))+
+      frow("8","Additional income from Schedule 1 (incl. Schedule C)",seProfit+(Number(inp.otherIncome)||0))+
+      frow("9","Total income",r.totalIncome,true)+
+      frow("10","Adjustments to income",r.adjustmentsToIncome)+
+      frow("11","Adjusted gross income (AGI)",r.adjustedGrossIncome,true)+
+      frow("12","Standard or itemized deduction ("+r.deductionMethodUsed+")",r.deductionTaken)+
+      (r.seniorDeduction?frow("13a","Additional deduction for age 65+ (2025)",r.seniorDeduction):"")+
+      (r.tipsDeduction?frow("13b","Deduction for qualified tips (2025)",r.tipsDeduction):"")+
+      (r.overtimeDeduction?frow("13c","Deduction for qualified overtime (2025)",r.overtimeDeduction):"")+
+      frow("13d","Qualified business income deduction",r.qbiDeduction)+
+      frow("14","Total deductions",r.deductionTaken+r.seniorDeduction+r.tipsDeduction+r.overtimeDeduction+r.qbiDeduction)+
+      frow("15","Taxable income",r.taxableIncome,true)+
+      '<div class="f-pg">Form 1040 (2025) — Page 1</div></div>';
+
+    var page2='<div class="page1040">'+
+      '<div class="f-head"><div><div class="t">Form 1040 (2025)</div>'+
+        '<div class="sub">Tax, Credits, and Payments</div></div>'+
+        '<div class="f-omb">'+(name||"")+'</div></div>'+
+      frow("16","Tax (from Qualified Dividends & Capital Gain Worksheet)",r.tentativeTax)+
+      frow("18","Add lines 16 and 17",r.tentativeTax)+
+      frow("19","Child tax credit / credit for other dependents",credits19)+
+      frow("21","Total credits",credits19)+
+      frow("22","Subtract line 21 from line 18",line22,true)+
+      frow("23","Other taxes (self-employment, Add'l Medicare, NIIT)",otherTax)+
+      frow("24","Total tax",r.totalTax,true)+
+      frow("25d","Federal income tax withheld",wh)+
+      frow("26","Estimated tax payments",est)+
+      frow("27","Earned income credit (EIC)",r.earnedIncomeCredit)+
+      frow("28","Additional child tax credit",r.additionalChildTaxCredit)+
+      frow("32","Total other payments and refundable credits",otherPay)+
+      frow("33","Total payments",r.totalPayments,true)+
+      (r.refundOwed>=0
+        ? frow("34","Overpayment (amount you overpaid)",r.refundOwed,true)+frow("35a","Amount to be refunded to you",r.refundOwed,true)
+        : frow("37","Amount you owe",-r.refundOwed,true))+
+      '<div class="f-note">This document reproduces the Form 1040 line structure for tax year 2025 and is filled from the figures you entered. '+
+      'It is an estimate for your review — verify against your source documents and the official IRS instructions before filing. This tool does not e-file. '+
+      'Effective rate '+(r.effectiveRate*100).toFixed(1)+'% · marginal rate '+(r.marginalRate*100).toFixed(0)+'%.</div>'+
+      '<div class="f-pg">Form 1040 (2025) — Page 2</div></div>';
+
+    document.getElementById("f1040").innerHTML=bar+page1+page2;
+    document.body.classList.add("show1040");
+    window.scrollTo(0,0);
+  };
 
   render();
 })();

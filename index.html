@@ -82,18 +82,28 @@
   }
 
   /* Entity chooser home */
-  .hero{text-align:center;max-width:720px;margin:8px auto 24px}
-  .hero h1{font-size:30px;color:var(--navy);margin:0 0 8px}
-  .hero p{color:var(--muted);font-size:16px;margin:0}
-  .entity-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:0 auto}
+  .hero{text-align:center;max-width:680px;margin:18px auto 22px}
+  .badge{display:inline-block;background:#e6f5ef;color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.4px;padding:5px 12px;border-radius:999px;margin-bottom:14px;text-transform:uppercase}
+  .hero h1{font-size:34px;color:var(--navy);margin:0 0 10px;letter-spacing:-.5px}
+  .hero p{color:var(--muted);font-size:16px;margin:0;line-height:1.5}
+  .tbar{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;max-width:900px;margin:0 auto 26px}
+  .tbar-item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px}
+  .tbar-ico{width:26px;height:26px;border-radius:8px;background:#eef4f1;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .tbar-item b{display:block;font-size:13px;color:var(--ink)}
+  .tbar-item span{font-size:11.5px;color:var(--muted)}
+  .entity-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:940px;margin:0 auto}
   @media(max-width:760px){.entity-grid{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:480px){.entity-grid{grid-template-columns:1fr}}
-  .ecard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 20px;cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s;text-align:left}
-  .ecard:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(23,40,79,.12);border-color:var(--accent2)}
-  .ecard .ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
+  .ecard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 20px;cursor:pointer;transition:transform .14s,box-shadow .14s,border-color .14s;text-align:left;position:relative}
+  .ecard:hover{transform:translateY(-4px);box-shadow:0 14px 32px rgba(23,40,79,.13);border-color:var(--accent2)}
+  .ecard .ico{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+  .ecard .ico svg{width:24px;height:24px}
   .ecard h3{margin:0 0 4px;color:var(--navy);font-size:17px}
-  .ecard .form{font-size:12px;color:var(--accent);font-weight:700;letter-spacing:.3px}
+  .ecard .form{font-size:11.5px;color:var(--accent);font-weight:700;letter-spacing:.4px;text-transform:uppercase}
   .ecard p{margin:8px 0 0;font-size:13px;color:var(--muted);line-height:1.45}
+  .ecard .go{margin-top:12px;font-size:13px;font-weight:700;color:var(--accent);opacity:0;transform:translateX(-4px);transition:opacity .14s,transform .14s}
+  .ecard:hover .go{opacity:1;transform:translateX(0)}
+  .homefoot{text-align:center;color:var(--muted);font-size:12.5px;max-width:900px;margin:30px auto 10px;border-top:1px solid var(--line);padding-top:18px}
   .backlink{display:inline-block;margin-bottom:14px;color:var(--navy);font-size:14px;cursor:pointer;font-weight:600}
   .backlink:hover{color:var(--accent)}
   .k1card{background:#f2f7f5;border:1px solid #cfe6de;border-radius:12px;padding:14px;margin:8px 0}
@@ -565,27 +575,43 @@
   };
 
   // ============================ MULTI-ENTITY HOME ============================
+  var SVG={
+    person:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
+    brief:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>',
+    building:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>',
+    store:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-5h14l1 5M4 9v11h16V9M9 20v-6h6v6"/></svg>',
+    partners:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M2.5 20c0-3 2.5-5 5.5-5M21.5 20c0-3-2.5-5-5.5-5"/></svg>',
+    bank:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5M4 9v9M9 9v9M15 9v9M20 9v9M3 21h18"/></svg>',
+    ribbon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M9 12l-2 9 5-3 5 3-2-9"/></svg>'
+  };
   var ENTITIES=[
-    { key:"individual", et:null, ico:"\u{1F464}", bg:"#e8effb", title:"Individual", form:"Form 1040", desc:"Employees, families, retirees, and investors filing a personal return." },
-    { key:"individual", et:"se", ico:"\u{1F9F0}", bg:"#e6f5ef", title:"Self-Employed", form:"1040 + Schedule C", desc:"Freelancers, gig workers, and sole proprietors." },
-    { key:"business", et:"c_corp", ico:"\u{1F3E2}", bg:"#eef0f7", title:"C Corporation", form:"Form 1120", desc:"Corporations taxed at a flat 21% at the entity level." },
-    { key:"business", et:"s_corp", ico:"\u{1F3EC}", bg:"#fdf1e7", title:"S Corporation", form:"Form 1120-S", desc:"Pass-through income reported to owners on Schedule K-1." },
-    { key:"business", et:"partnership", ico:"\u{1F91D}", bg:"#f3ecfb", title:"Partnership / LLC", form:"Form 1065", desc:"Multi-owner pass-through with K-1 allocations." },
-    { key:"business", et:"trust", ico:"\u{1F3DB}️", bg:"#eef0f7", title:"Estate & Trust", form:"Form 1041", desc:"Fiduciary returns using the compressed trust brackets." },
-    { key:"business", et:"nonprofit", ico:"\u{1F397}️", bg:"#e6f5ef", title:"Nonprofit", form:"Form 990 / 990-T", desc:"Tax-exempt organizations; 21% only on unrelated business income." }
+    { key:"individual", et:null, svg:SVG.person, c:"#23366b", bg:"#e8effb", title:"Individual", form:"Form 1040", desc:"Employees, families, retirees, and investors filing a personal return." },
+    { key:"individual", et:"se", svg:SVG.brief, c:"#21806b", bg:"#e6f5ef", title:"Self-Employed", form:"1040 + Schedule C", desc:"Freelancers, gig workers, and sole proprietors." },
+    { key:"business", et:"c_corp", svg:SVG.building, c:"#3f51b5", bg:"#eaecfa", title:"C Corporation", form:"Form 1120", desc:"Corporations taxed at a flat 21% at the entity level." },
+    { key:"business", et:"s_corp", svg:SVG.store, c:"#c1671f", bg:"#fdf1e7", title:"S Corporation", form:"Form 1120-S", desc:"Pass-through income reported to owners on Schedule K-1." },
+    { key:"business", et:"partnership", svg:SVG.partners, c:"#6c3fb0", bg:"#f3ecfb", title:"Partnership / LLC", form:"Form 1065", desc:"Multi-owner pass-through with K-1 allocations." },
+    { key:"business", et:"trust", svg:SVG.bank, c:"#47566f", bg:"#eef0f7", title:"Estate & Trust", form:"Form 1041", desc:"Fiduciary returns using the compressed trust brackets." },
+    { key:"business", et:"nonprofit", svg:SVG.ribbon, c:"#2a8a5f", bg:"#e6f5ef", title:"Nonprofit", form:"Form 990 / 990-T", desc:"Tax-exempt organizations; 21% only on unrelated business income." }
   ];
   function renderHome(){
     var cards=ENTITIES.map(function(e,i){
       return '<div class="ecard" onclick="window.__pick('+i+')">'+
-        '<div class="ico" style="background:'+e.bg+'">'+e.ico+'</div>'+
+        '<div class="ico" style="background:'+e.bg+';color:'+e.c+'">'+e.svg+'</div>'+
         '<div class="form">'+e.form+'</div>'+
-        '<h3>'+e.title+'</h3><p>'+e.desc+'</p></div>';
+        '<h3>'+e.title+'</h3><p>'+e.desc+'</p>'+
+        '<div class="go">Start →</div></div>';
     }).join("");
+    var bars=[["\u{1F512}","100% private","Runs in your browser — your data never leaves your device"],
+      ["✓","Free for 2025","No signup, no paywall"],
+      ["\u{1F9EE}","Accurate","2025 IRS figures · 90+ built-in tax tests"]];
+    var trust=bars.map(function(b){return '<div class="tbar-item"><span class="tbar-ico">'+b[0]+'</span><div><b>'+b[1]+'</b><span>'+b[2]+'</span></div></div>';}).join("");
     el("home").innerHTML=
-      '<div class="hero"><h1>Who’s filing this year?</h1>'+
-      '<p>Pick your filer type. Everything runs privately in your browser — free, for 2025.</p></div>'+
+      '<div class="hero"><div class="badge">2025 Federal Tax Year</div>'+
+      '<h1>Who’s filing this year?</h1>'+
+      '<p>Pick your filer type and we’ll do the math, fill the forms, and hand you a ready-to-file PDF — all in your browser.</p></div>'+
+      '<div class="tbar">'+trust+'</div>'+
       '<div class="entity-grid">'+cards+'</div>'+
-      '<div class="note" style="max-width:900px;margin:26px auto 0">Prepares your return for review and filing — it does not e-file to the IRS.</div>';
+      '<div class="homefoot">Prepares your return for review and filing — it does not e-file to the IRS. Not affiliated with the IRS.</div>';
   }
   window.__pick=function(i){
     var e=ENTITIES[i];
@@ -659,7 +685,9 @@
       r.k1.map(function(o){ return '<div class="k1card"><b>'+o.name+'</b> ('+o.percent+'%): '+usd(o.ordinaryIncomeShare,2)+' ordinary business income<br><span style="font-size:12px;color:var(--muted)">'+o.seTaxNote+'</span></div>'; }).join(""); }
     var notes=(r.notes||[]).map(function(x){return '<div class="note" style="margin-top:8px">'+x+'</div>';}).join("");
     body+='<h2 style="font-size:15px;margin-top:18px">Result</h2><table><tbody>'+rows+'</tbody></table>'+k1+notes+
-      '<div class="actions noprint" style="margin-top:16px"><span></span><button class="btn" onclick="window.print()">Print / Save as PDF</button></div>';
+      '<div class="actions noprint" style="margin-top:16px;gap:10px;justify-content:flex-start;flex-wrap:wrap">'+
+      '<button class="btn" onclick="window.__downloadBusinessForm(this)">Download filled '+(title?title.form:"form")+' (PDF)</button>'+
+      '<button class="btn ghost" onclick="window.print()">Print view</button></div>';
     el("panel").innerHTML=body;
     // bind business inputs
     Array.prototype.forEach.call(el("panel").querySelectorAll("[data-bkey]"),function(inp){
@@ -676,6 +704,50 @@
       (typeof r.ordinaryBusinessIncome==="number"?line("Ordinary business income",r.ordinaryBusinessIncome):"")+
       (typeof r.refundOwed==="number"?line(r.refundOwed>=0?"Refund":"Balance due",Math.abs(r.refundOwed)):"");
   }
+
+  // ---- Filled business-form PDF (official line structure) ----
+  var FORM_NO={ c_corp:"Form 1120", s_corp:"Form 1120-S", partnership:"Form 1065", trust:"Form 1041", estate:"Form 1041", nonprofit:"Form 990-T" };
+  window.__downloadBusinessForm=async function(btn){
+    if(typeof PDFLib==="undefined"){ alert("PDF library still loading — try again."); return; }
+    var label=btn?btn.textContent:""; if(btn){ btn.textContent="Generating…"; btn.disabled=true; }
+    try{
+      var inp=bToInput(), r=BusinessEngine.computeBusinessTax(inp);
+      var formNo=FORM_NO[inp.entityType]||"Business return";
+      var doc=await PDFLib.PDFDocument.create();
+      var font=await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+      var bold=await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+      var rgb=PDFLib.rgb, navy=rgb(0.09,0.15,0.33), gray=rgb(0.4,0.4,0.4);
+      var page=doc.addPage([612,792]), y=748;
+      page.drawText(formNo,{x:40,y:y,size:18,font:bold,color:navy});
+      page.drawText("2025",{x:540,y:y,size:16,font:bold,color:navy});
+      y-=18; page.drawText(r.entity,{x:40,y:y,size:10,font:font,color:gray});
+      y-=6; page.drawLine({start:{x:40,y:y},end:{x:572,y:y},thickness:1.5,color:navy}); y-=22;
+      r.lineItems.forEach(function(li){
+        var emph=/Total|Taxable income|Refund|Balance|Ordinary business/i.test(li[1]||li[0]);
+        var ff=emph?bold:font;
+        page.drawText(String(li[0]),{x:44,y:y,size:9,font:font,color:gray});
+        page.drawText(String(li[1]),{x:96,y:y,size:10,font:ff,color:emph?navy:rgb(0.15,0.15,0.15)});
+        if(li[2]!==""){ var t=usd(li[2],2), w=ff.widthOfTextAtSize(t,10); page.drawText(t,{x:572-w,y:y,size:10,font:ff,color:emph?navy:rgb(0.15,0.15,0.15)}); }
+        page.drawLine({start:{x:40,y:y-5},end:{x:572,y:y-5},thickness:0.4,color:rgb(0.85,0.88,0.92)}); y-=20;
+      });
+      if(r.k1){
+        y-=10; page.drawText("Schedule K-1 — owner allocations",{x:40,y:y,size:12,font:bold,color:navy}); y-=20;
+        r.k1.forEach(function(o){
+          page.drawText(o.name+" ("+o.percent+"%)",{x:48,y:y,size:10,font:font,color:rgb(0.15,0.15,0.15)});
+          var t=usd(o.ordinaryIncomeShare,2), w=font.widthOfTextAtSize(t,10);
+          page.drawText(t,{x:572-w,y:y,size:10,font:bold,color:navy}); y-=18;
+        });
+      }
+      (r.notes||[]).forEach(function(nt){
+        y-=6; var words=nt.split(" "), lineStr="";
+        words.forEach(function(wd){ if((lineStr+" "+wd).length>95){ page.drawText(lineStr,{x:40,y:y,size:8,font:font,color:gray}); y-=11; lineStr=wd; } else lineStr+=" "+wd; });
+        if(lineStr){ page.drawText(lineStr.trim(),{x:40,y:y,size:8,font:font,color:gray}); y-=11; }
+      });
+      page.drawText("Generated in the official "+formNo+" line structure. Estimate for review; verify before filing. Not e-filed.",{x:40,y:36,size:7.5,font:font,color:gray});
+      dl(await doc.save(), formNo.replace(/[^A-Za-z0-9]/g,"-")+"-2025.pdf");
+    }catch(e){ alert("Could not generate the form: "+e.message); }
+    finally{ if(btn){ btn.textContent=label; btn.disabled=false; } }
+  };
 
   // ============================ APP DISPATCHER ==============================
   function renderApp(){

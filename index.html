@@ -80,19 +80,40 @@
     .page1040{margin:0 auto;page-break-after:always}
     @page{size:letter;margin:0.5in}
   }
+
+  /* Entity chooser home */
+  .hero{text-align:center;max-width:720px;margin:8px auto 24px}
+  .hero h1{font-size:30px;color:var(--navy);margin:0 0 8px}
+  .hero p{color:var(--muted);font-size:16px;margin:0}
+  .entity-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:0 auto}
+  @media(max-width:760px){.entity-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:480px){.entity-grid{grid-template-columns:1fr}}
+  .ecard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 20px;cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s;text-align:left}
+  .ecard:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(23,40,79,.12);border-color:var(--accent2)}
+  .ecard .ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
+  .ecard h3{margin:0 0 4px;color:var(--navy);font-size:17px}
+  .ecard .form{font-size:12px;color:var(--accent);font-weight:700;letter-spacing:.3px}
+  .ecard p{margin:8px 0 0;font-size:13px;color:var(--muted);line-height:1.45}
+  .backlink{display:inline-block;margin-bottom:14px;color:var(--navy);font-size:14px;cursor:pointer;font-weight:600}
+  .backlink:hover{color:var(--accent)}
+  .k1card{background:#f2f7f5;border:1px solid #cfe6de;border-radius:12px;padding:14px;margin:8px 0}
+  .k1card b{color:var(--navy)}
 </style>
 </head>
 <body>
   <div class="nav">
-    <div class="brand">TaxFile Pro</div>
+    <div class="brand" style="cursor:pointer" onclick="window.__goHome&&window.__goHome()">TaxFile Pro</div>
     <div class="tag">2025 federal tax year · runs entirely in your browser</div>
   </div>
 
   <div class="wrap">
-    <div class="steps" id="steps"></div>
-    <div class="grid">
-      <div class="card" id="panel"></div>
-      <div class="summary" id="summary"></div>
+    <div id="home"></div>
+    <div id="filer" style="display:none">
+      <div class="steps" id="steps"></div>
+      <div class="grid">
+        <div class="card" id="panel"></div>
+        <div class="summary" id="summary"></div>
+      </div>
     </div>
   </div>
 
@@ -100,8 +121,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="engine.web.js"></script>
+<script src="business.web.js"></script>
 <script>
 (function(){
+  var mode="home";        // "home" | "individual" | "business"
+  var entityType=null;    // for business mode
   var STEPS=["About you","Income","Deductions","Payments","Review"];
   var step=0;
   var f={
@@ -540,7 +564,128 @@
     finally{ if(btn){ btn.textContent=label; btn.disabled=false; } }
   };
 
-  render();
+  // ============================ MULTI-ENTITY HOME ============================
+  var ENTITIES=[
+    { key:"individual", et:null, ico:"\u{1F464}", bg:"#e8effb", title:"Individual", form:"Form 1040", desc:"Employees, families, retirees, and investors filing a personal return." },
+    { key:"individual", et:"se", ico:"\u{1F9F0}", bg:"#e6f5ef", title:"Self-Employed", form:"1040 + Schedule C", desc:"Freelancers, gig workers, and sole proprietors." },
+    { key:"business", et:"c_corp", ico:"\u{1F3E2}", bg:"#eef0f7", title:"C Corporation", form:"Form 1120", desc:"Corporations taxed at a flat 21% at the entity level." },
+    { key:"business", et:"s_corp", ico:"\u{1F3EC}", bg:"#fdf1e7", title:"S Corporation", form:"Form 1120-S", desc:"Pass-through income reported to owners on Schedule K-1." },
+    { key:"business", et:"partnership", ico:"\u{1F91D}", bg:"#f3ecfb", title:"Partnership / LLC", form:"Form 1065", desc:"Multi-owner pass-through with K-1 allocations." },
+    { key:"business", et:"trust", ico:"\u{1F3DB}️", bg:"#eef0f7", title:"Estate & Trust", form:"Form 1041", desc:"Fiduciary returns using the compressed trust brackets." },
+    { key:"business", et:"nonprofit", ico:"\u{1F397}️", bg:"#e6f5ef", title:"Nonprofit", form:"Form 990 / 990-T", desc:"Tax-exempt organizations; 21% only on unrelated business income." }
+  ];
+  function renderHome(){
+    var cards=ENTITIES.map(function(e,i){
+      return '<div class="ecard" onclick="window.__pick('+i+')">'+
+        '<div class="ico" style="background:'+e.bg+'">'+e.ico+'</div>'+
+        '<div class="form">'+e.form+'</div>'+
+        '<h3>'+e.title+'</h3><p>'+e.desc+'</p></div>';
+    }).join("");
+    el("home").innerHTML=
+      '<div class="hero"><h1>Who’s filing this year?</h1>'+
+      '<p>Pick your filer type. Everything runs privately in your browser — free, for 2025.</p></div>'+
+      '<div class="entity-grid">'+cards+'</div>'+
+      '<div class="note" style="max-width:900px;margin:26px auto 0">Prepares your return for review and filing — it does not e-file to the IRS.</div>';
+  }
+  window.__pick=function(i){
+    var e=ENTITIES[i];
+    if(e.key==="individual"){ mode="individual"; if(e.et==="se"){ f.selfEmployedHint=true; } }
+    else { mode="business"; entityType=e.et; bf.entityType=e.et; }
+    step=0; renderApp();
+  };
+  window.__goHome=function(){ mode="home"; renderApp(); };
+
+  // ============================ BUSINESS WIZARD =============================
+  var bf={ entityType:null, isEstate:false, simpleTrust:false,
+    grossReceipts:"",costOfGoodsSold:"",operatingExpenses:"",taxableIncome:"",credits:"",
+    ordinaryBusinessIncome:"",
+    o1n:"Owner 1",o1p:"",o2n:"Owner 2",o2p:"",o3n:"Owner 3",o3p:"",
+    totalIncome:"",deductions:"",incomeDistributionDeduction:"",
+    unrelatedBusinessIncome:"",estimatedPayments:"" };
+  function bToInput(){
+    var t=bf.entityType==="trust"&&bf.isEstate?"estate":bf.entityType;
+    var inp={ entityType:t,
+      grossReceipts:n(bf.grossReceipts),costOfGoodsSold:n(bf.costOfGoodsSold),operatingExpenses:n(bf.operatingExpenses),
+      taxableIncome:n(bf.taxableIncome),credits:n(bf.credits),
+      ordinaryBusinessIncome:n(bf.ordinaryBusinessIncome),
+      totalIncome:n(bf.totalIncome),deductions:n(bf.deductions),incomeDistributionDeduction:n(bf.incomeDistributionDeduction),
+      simpleTrust:bf.simpleTrust,
+      unrelatedBusinessIncome:n(bf.unrelatedBusinessIncome),estimatedPayments:n(bf.estimatedPayments) };
+    if(t==="s_corp"||t==="partnership"){
+      var owners=[];
+      [[bf.o1n,bf.o1p],[bf.o2n,bf.o2p],[bf.o3n,bf.o3p]].forEach(function(o){ if(n(o[1])) owners.push({name:o[0],percent:n(o[1])}); });
+      inp.owners=owners.length?owners:[{name:"Owner 1",percent:100}];
+    }
+    return inp;
+  }
+  function bfield(label,key,opts){ opts=opts||{};var type=opts.type||"number";
+    return '<div class="field"><label>'+label+'</label><input data-bkey="'+key+'" type="'+type+'" '+(type==="number"?'min="0" inputmode="decimal" placeholder="0"':'')+' value="'+(bf[key]!=null?String(bf[key]).replace(/"/g,"&quot;"):"")+'"></div>';
+  }
+  function renderBusiness(){
+    var et=bf.entityType, title=ENTITIES.filter(function(e){return e.et===et;})[0];
+    var body='<span class="backlink" onclick="window.__goHome()">← Change filer type</span>'+
+      '<h2>'+(title?title.title:"Business")+' <span style="font-weight:400;color:var(--muted);font-size:14px">'+(title?title.form:"")+'</span></h2>';
+    if(et==="c_corp"){
+      body+='<p style="font-size:13px;color:var(--muted)">Enter your income and expenses, or a taxable income figure directly.</p>'+
+        '<div class="row">'+bfield("Gross receipts or sales","grossReceipts")+bfield("Cost of goods sold","costOfGoodsSold")+'</div>'+
+        bfield("Operating expenses (total deductions)","operatingExpenses")+
+        bfield("Or enter taxable income directly (optional)","taxableIncome")+
+        '<div class="row">'+bfield("Tax credits","credits")+bfield("Estimated tax payments","estimatedPayments")+'</div>';
+    } else if(et==="s_corp"||et==="partnership"){
+      body+='<p style="font-size:13px;color:var(--muted)">Pass-through: the entity owes no federal income tax. We compute each owner’s Schedule K-1 share.</p>'+
+        '<div class="row">'+bfield("Gross receipts or sales","grossReceipts")+bfield("Cost of goods sold","costOfGoodsSold")+'</div>'+
+        bfield("Operating expenses","operatingExpenses")+
+        bfield("Or ordinary business income directly (optional)","ordinaryBusinessIncome")+
+        '<h2 style="font-size:15px;margin-top:16px">Owners (Schedule K-1)</h2>'+
+        '<div class="row">'+bfield("Owner 1 name","o1n",{type:"text"})+bfield("Owner 1 %","o1p")+'</div>'+
+        '<div class="row">'+bfield("Owner 2 name","o2n",{type:"text"})+bfield("Owner 2 %","o2p")+'</div>'+
+        '<div class="row">'+bfield("Owner 3 name","o3n",{type:"text"})+bfield("Owner 3 %","o3p")+'</div>';
+    } else if(et==="trust"){
+      body+='<label class="chk"><input type="checkbox" data-bkey="isEstate"'+(bf.isEstate?" checked":"")+'> This is an estate (uncheck for a trust)</label>'+
+        '<label class="chk"><input type="checkbox" data-bkey="simpleTrust"'+(bf.simpleTrust?" checked":"")+'> Simple trust ($300 exemption)</label>'+
+        bfield("Total income","totalIncome")+
+        bfield("Deductions","deductions")+
+        bfield("Income distribution deduction (to beneficiaries)","incomeDistributionDeduction")+
+        bfield("Estimated tax payments","estimatedPayments");
+    } else if(et==="nonprofit"){
+      body+='<p style="font-size:13px;color:var(--muted)">Exempt-function income is not taxed. Enter any unrelated business income (UBTI) for the 21% UBIT (Form 990-T).</p>'+
+        bfield("Unrelated business taxable income (UBTI)","unrelatedBusinessIncome")+
+        bfield("Estimated tax payments","estimatedPayments");
+    }
+    var r=BusinessEngine.computeBusinessTax(bToInput());
+    var rows=r.lineItems.map(function(li){ return '<tr><td class="ln">'+li[0]+'</td><td>'+li[1]+'</td><td class="amt">'+(li[2]===""?"":usd(li[2],2))+'</td></tr>'; }).join("");
+    var k1="";
+    if(r.k1){ k1='<h2 style="font-size:15px;margin-top:14px">Schedule K-1 — each owner’s share</h2>'+
+      r.k1.map(function(o){ return '<div class="k1card"><b>'+o.name+'</b> ('+o.percent+'%): '+usd(o.ordinaryIncomeShare,2)+' ordinary business income<br><span style="font-size:12px;color:var(--muted)">'+o.seTaxNote+'</span></div>'; }).join(""); }
+    var notes=(r.notes||[]).map(function(x){return '<div class="note" style="margin-top:8px">'+x+'</div>';}).join("");
+    body+='<h2 style="font-size:15px;margin-top:18px">Result</h2><table><tbody>'+rows+'</tbody></table>'+k1+notes+
+      '<div class="actions noprint" style="margin-top:16px"><span></span><button class="btn" onclick="window.print()">Print / Save as PDF</button></div>';
+    el("panel").innerHTML=body;
+    // bind business inputs
+    Array.prototype.forEach.call(el("panel").querySelectorAll("[data-bkey]"),function(inp){
+      var key=inp.getAttribute("data-bkey"), ev=(inp.type==="checkbox")?"change":"input";
+      inp.addEventListener(ev,function(){ bf[key]=inp.type==="checkbox"?inp.checked:inp.value; renderBusiness(); });
+    });
+    // business summary sidebar
+    var isRefund = (typeof r.refundOwed==="number") ? r.refundOwed>=0 : true;
+    var big = (typeof r.totalTax==="number") ? usd(r.totalTax) : usd(0);
+    el("summary").innerHTML='<h3>'+r.entity+'</h3>'+
+      '<div class="big" style="color:var(--navy)">'+big+'</div>'+
+      '<div style="color:var(--muted);font-size:13px;margin-bottom:12px">'+(r.entityLevelTax===0&&!r.totalTax?"No entity-level federal tax":"Estimated total tax")+'</div>'+
+      (typeof r.taxableIncome==="number"?line("Taxable income",r.taxableIncome):"")+
+      (typeof r.ordinaryBusinessIncome==="number"?line("Ordinary business income",r.ordinaryBusinessIncome):"")+
+      (typeof r.refundOwed==="number"?line(r.refundOwed>=0?"Refund":"Balance due",Math.abs(r.refundOwed)):"");
+  }
+
+  // ============================ APP DISPATCHER ==============================
+  function renderApp(){
+    if(mode==="home"){ el("home").style.display=""; el("filer").style.display="none"; renderHome(); return; }
+    el("home").style.display="none"; el("filer").style.display="";
+    if(mode==="business"){ el("steps").style.display="none"; renderBusiness(); }
+    else { el("steps").style.display=""; render(); }
+  }
+
+  renderApp();
 })();
 </script>
 </body>

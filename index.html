@@ -108,8 +108,10 @@
     firstName:"",lastName:"",filingStatus:"single",taxpayerAge65OrOlder:false,
     numChildrenCTC:0,numOtherDependents:0,
     wages:"",taxableInterest:"",ordinaryDividends:"",qualifiedDividends:"",
-    netLongTermCapitalGains:"",retirementDistributions:"",selfEmploymentNetProfit:"",
+    netLongTermCapitalGains:"",netShortTermCapitalGains:"",retirementDistributions:"",
+    socialSecurityBenefits:"",selfEmploymentNetProfit:"",
     qualifiedBusinessIncome:"",qualifiedTips:"",qualifiedOvertime:"",
+    tuition:"",retirementContributions:"",
     deductionMethod:"auto",stateAndLocalTaxes:"",mortgageInterest:"",charitableContributions:"",
     federalWithholding:"",estimatedPayments:""
   };
@@ -125,9 +127,13 @@
       filingStatus:f.filingStatus,taxpayerAge65OrOlder:f.taxpayerAge65OrOlder,dependents:deps,
       wages:n(f.wages),taxableInterest:n(f.taxableInterest),ordinaryDividends:n(f.ordinaryDividends),
       qualifiedDividends:n(f.qualifiedDividends),netLongTermCapitalGains:n(f.netLongTermCapitalGains),
+      netShortTermCapitalGains:n(f.netShortTermCapitalGains),
       retirementDistributions:n(f.retirementDistributions),selfEmploymentNetProfit:n(f.selfEmploymentNetProfit),
+      socialSecurityBenefits:n(f.socialSecurityBenefits),
       qualifiedBusinessIncome:n(f.qualifiedBusinessIncome),qualifiedTips:n(f.qualifiedTips),
       qualifiedOvertime:n(f.qualifiedOvertime),
+      aotcExpenses:n(f.tuition),aotcStudents:(n(f.tuition)?1:undefined),
+      retirementContributions:n(f.retirementContributions),
       deductionMethod:f.deductionMethod==="auto"?undefined:f.deductionMethod,
       itemized:{stateAndLocalTaxes:n(f.stateAndLocalTaxes),mortgageInterest:n(f.mortgageInterest),charitableContributions:n(f.charitableContributions)},
       federalWithholding:n(f.federalWithholding),estimatedPayments:n(f.estimatedPayments)
@@ -167,11 +173,14 @@
         field("Wages (W-2 box 1)","wages")+
         field("Taxable interest","taxableInterest")+
         '<div class="row">'+field("Ordinary dividends","ordinaryDividends")+field("Qualified dividends","qualifiedDividends")+'</div>'+
-        field("Net long-term capital gains","netLongTermCapitalGains")+
+        '<div class="row">'+field("Net long-term capital gains","netLongTermCapitalGains")+field("Net short-term capital gains","netShortTermCapitalGains")+'</div>'+
         field("Retirement / IRA distributions (taxable)","retirementDistributions")+
+        field('Social Security benefits <span class="hint">total, box 5 — we compute the taxable part</span>',"socialSecurityBenefits")+
         field("Self-employment net profit (Schedule C)","selfEmploymentNetProfit")+
         field("Qualified business income (for §199A)","qualifiedBusinessIncome")+
-        '<div class="row">'+field("Qualified tips (2025 deduction)","qualifiedTips")+field("Qualified overtime (2025 deduction)","qualifiedOvertime")+'</div>';
+        '<div class="row">'+field("Qualified tips (2025 deduction)","qualifiedTips")+field("Qualified overtime (2025 deduction)","qualifiedOvertime")+'</div>'+
+        '<h2 style="font-size:15px;margin-top:18px">Credits</h2>'+
+        '<div class="row">'+field('College tuition paid <span class="hint">education credit</span>',"tuition")+field('IRA / 401(k) contributions <span class="hint">saver\'s credit</span>',"retirementContributions")+'</div>';
     }
     if(step===2){
       return '<h2>Deductions</h2>'+
@@ -198,10 +207,10 @@
     var warns=(r.warnings||[]).map(function(w){return '<div class="warn">'+w+'</div>';}).join("");
     return '<h2>Review &amp; save</h2><table><tbody>'+rows+'</tbody></table>'+warns+
       '<div class="actions noprint" style="gap:10px;justify-content:flex-start;flex-wrap:wrap">'+
-      '<button class="btn" id="dlIRS" onclick="window.__downloadIRS1040&&window.__downloadIRS1040(this)">Download filled IRS Form 1040 (PDF)</button>'+
-      '<button class="btn ghost" onclick="window.__print1040&&window.__print1040()">Print view</button>'+
-      '<button class="btn ghost" onclick="window.print()">Summary PDF</button></div>'+
-      '<div class="note">Download the <b>official IRS Form 1040 (2025)</b> filled with your figures — the genuine government PDF, ready to review, print, or e-file yourself. Figures are for your review; verify against your source documents before filing. This tool does not e-file for you.</div>';
+      '<button class="btn" id="dlPacket" onclick="window.__downloadPacket&&window.__downloadPacket(this)">Download full filing packet (1040 + schedules)</button>'+
+      '<button class="btn ghost" id="dlIRS" onclick="window.__downloadIRS1040&&window.__downloadIRS1040(this)">Just the 1040</button>'+
+      '<button class="btn ghost" onclick="window.__print1040&&window.__print1040()">Print view</button></div>'+
+      '<div class="note">The <b>filing packet</b> gives you the filled official IRS Form 1040 (2025) <b>plus every schedule your return needs</b> (Schedule 1, 2, SE, 8812, 8995, D…) in one PDF — ready to review, print, or e-file yourself. Figures are for your review; verify against your documents before filing. This tool does not e-file for you.</div>';
   }
 
   function bind(){
@@ -345,76 +354,189 @@
   // "[0]" suffix. Money lines, identity, and filing status confirmed on-page.
   var P1="topmostSubform[0].Page1[0].", P2="topmostSubform[0].Page2[0].";
   function m1040(n){ return n ? Math.round(n).toString() : ""; }
+
+  // Fill the official 1040 template and return the loaded PDFDocument (unsaved).
+  async function fill1040Doc(inp, r){
+    var bytes=await fetch("f1040-2025.pdf").then(function(x){return x.arrayBuffer();});
+    var doc=await PDFLib.PDFDocument.load(bytes);
+    var form=doc.getForm();
+    var set=function(name,val){ if(val===""||val==null)return; try{form.getTextField(name+"[0]").setText(String(val));}catch(e){} };
+    var check=function(name){ try{form.getCheckBox(name).check();}catch(e){} };
+    set(P1+"f1_14",((f.firstName||"")).trim());
+    set(P1+"f1_15",((f.lastName||"")).trim());
+    var fsMap={single:"Checkbox_ReadOrder[0].c1_8[0]",married_jointly:"Checkbox_ReadOrder[0].c1_8[1]",
+      married_separately:"Checkbox_ReadOrder[0].c1_8[2]",head_of_household:"c1_8[0]",qualifying_surviving_spouse:"c1_8[1]"};
+    check(P1+fsMap[inp.filingStatus]);
+    var wages=Number(inp.wages)||0;
+    var cap=Number(r.netCapitalGain)||0;
+    var sch1=(Number(r.scheduleCNetProfit)||0)+(Number(inp.otherIncome)||0);
+    set(P1+"f1_47",m1040(wages)); set(P1+"f1_57",m1040(wages));
+    set(P1+"f1_59",m1040(Number(inp.taxableInterest)||0));
+    set(P1+"f1_60",m1040(Number(inp.qualifiedDividends)||0));
+    set(P1+"f1_61",m1040(Number(inp.ordinaryDividends)||0));
+    set(P1+"f1_66",m1040(Number(inp.retirementDistributions)||0));
+    set(P1+"f1_69",m1040(Number(r.taxableSocialSecurity)||0));
+    set(P1+"f1_70",m1040(cap));
+    set(P1+"f1_72",m1040(sch1));
+    set(P1+"f1_73",m1040(r.totalIncome));
+    set(P1+"f1_74",m1040(r.adjustmentsToIncome));
+    set(P1+"f1_75",m1040(r.adjustedGrossIncome));
+    var add13b=r.obbbaAdditionalDeductions||0;
+    var line14=r.deductionTaken+r.qbiDeduction+add13b;
+    var credits19=r.childTaxCredit+r.otherDependentCredit;
+    var taxAfterAmt=r.tentativeTax+(r.alternativeMinimumTax||0);
+    var line22=Math.max(0,taxAfterAmt-credits19);
+    var wh=Number(inp.federalWithholding)||0;
+    var otherPay=r.earnedIncomeCredit+r.additionalChildTaxCredit+(r.educationCreditRefundable||0);
+    set(P2+"f2_01",m1040(r.adjustedGrossIncome));
+    set(P2+"f2_02",m1040(r.deductionTaken));
+    set(P2+"f2_03",m1040(r.qbiDeduction));
+    set(P2+"f2_04",m1040(add13b));
+    set(P2+"f2_05",m1040(line14));
+    set(P2+"f2_06",m1040(r.taxableIncome));
+    set(P2+"f2_08",m1040(taxAfterAmt));
+    set(P2+"f2_10",m1040(taxAfterAmt));
+    set(P2+"f2_11",m1040(credits19));
+    set(P2+"f2_13",m1040(credits19));
+    set(P2+"f2_14",m1040(line22));
+    set(P2+"f2_15",m1040(r.totalOtherTaxes||0));
+    set(P2+"f2_16",m1040(r.totalTax));
+    set(P2+"f2_17",m1040(wh)); set(P2+"f2_20",m1040(wh));
+    set(P2+"f2_21",m1040(Number(inp.estimatedPayments)||0));
+    set(P2+"f2_23",m1040(r.earnedIncomeCredit));
+    set(P2+"f2_24",m1040(r.additionalChildTaxCredit));
+    set(P2+"f2_28",m1040(otherPay));
+    set(P2+"f2_29",m1040(r.totalPayments));
+    if(r.refundOwed>=0){ set(P2+"f2_30",m1040(r.refundOwed)); set(P2+"f2_31",m1040(r.refundOwed)); }
+    else set(P2+"f2_35",m1040(-r.refundOwed));
+    form.updateFieldAppearances();
+    return doc;
+  }
+
+  function dl(bytes, filename){
+    var blob=new Blob([bytes],{type:"application/pdf"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a"); a.href=url; a.download=filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
   window.__downloadIRS1040=async function(btn){
-    if(typeof PDFLib==="undefined"){ alert("PDF library still loading — try again in a moment."); return; }
-    var label = btn ? btn.textContent : "";
-    if(btn){ btn.textContent="Generating…"; btn.disabled=true; }
+    if(typeof PDFLib==="undefined"){ alert("PDF library still loading — try again."); return; }
+    var label=btn?btn.textContent:""; if(btn){ btn.textContent="Generating…"; btn.disabled=true; }
     try{
-      var inp=toInput(); var r=TaxEngine.computeTax(inp);
-      var bytes=await fetch("f1040-2025.pdf").then(function(x){return x.arrayBuffer();});
-      var doc=await PDFLib.PDFDocument.load(bytes);
-      var form=doc.getForm();
-      var set=function(name,val){ if(val===""||val==null)return; try{form.getTextField(name+"[0]").setText(String(val));}catch(e){} };
-      var check=function(name){ try{form.getCheckBox(name).check();}catch(e){} };
-
-      set(P1+"f1_14",((f.firstName||"")).trim());
-      set(P1+"f1_15",((f.lastName||"")).trim());
-      var fsMap={single:"Checkbox_ReadOrder[0].c1_8[0]",married_jointly:"Checkbox_ReadOrder[0].c1_8[1]",
-        married_separately:"Checkbox_ReadOrder[0].c1_8[2]",head_of_household:"c1_8[0]",qualifying_surviving_spouse:"c1_8[1]"};
-      check(P1+fsMap[inp.filingStatus]);
-
-      var wages=Number(inp.wages)||0;
-      var cap=(Number(inp.netLongTermCapitalGains)||0)+(Number(inp.netShortTermCapitalGains)||0);
-      var sch1=(Number(inp.selfEmploymentNetProfit)||0)+(Number(inp.otherIncome)||0);
-      set(P1+"f1_47",m1040(wages)); set(P1+"f1_57",m1040(wages));
-      set(P1+"f1_59",m1040(Number(inp.taxableInterest)||0));
-      set(P1+"f1_60",m1040(Number(inp.qualifiedDividends)||0));
-      set(P1+"f1_61",m1040(Number(inp.ordinaryDividends)||0));
-      set(P1+"f1_66",m1040(Number(inp.retirementDistributions)||0));
-      set(P1+"f1_69",m1040(Number(inp.taxableSocialSecurity)||0));
-      set(P1+"f1_70",m1040(cap));
-      set(P1+"f1_72",m1040(sch1));
-      set(P1+"f1_73",m1040(r.totalIncome));
-      set(P1+"f1_74",m1040(r.adjustmentsToIncome));
-      set(P1+"f1_75",m1040(r.adjustedGrossIncome));
-
-      var add13b=r.seniorDeduction+r.tipsDeduction+r.overtimeDeduction;
-      var line14=r.deductionTaken+r.qbiDeduction+add13b;
-      var credits19=r.childTaxCredit+r.otherDependentCredit;
-      var line22=Math.max(0,r.tentativeTax-credits19);
-      var otherTax=r.selfEmploymentTax+r.additionalMedicareTax+r.netInvestmentIncomeTax;
-      var otherPay=r.earnedIncomeCredit+r.additionalChildTaxCredit;
-      var wh=Number(inp.federalWithholding)||0;
-      set(P2+"f2_01",m1040(r.adjustedGrossIncome));
-      set(P2+"f2_02",m1040(r.deductionTaken));
-      set(P2+"f2_03",m1040(r.qbiDeduction));
-      set(P2+"f2_04",m1040(add13b));
-      set(P2+"f2_05",m1040(line14));
-      set(P2+"f2_06",m1040(r.taxableIncome));
-      set(P2+"f2_08",m1040(r.tentativeTax));
-      set(P2+"f2_10",m1040(r.tentativeTax));
-      set(P2+"f2_11",m1040(credits19));
-      set(P2+"f2_13",m1040(credits19));
-      set(P2+"f2_14",m1040(line22));
-      set(P2+"f2_15",m1040(otherTax));
-      set(P2+"f2_16",m1040(r.totalTax));
-      set(P2+"f2_17",m1040(wh)); set(P2+"f2_20",m1040(wh));
-      set(P2+"f2_21",m1040(Number(inp.estimatedPayments)||0));
-      set(P2+"f2_23",m1040(r.earnedIncomeCredit));
-      set(P2+"f2_24",m1040(r.additionalChildTaxCredit));
-      set(P2+"f2_28",m1040(otherPay));
-      set(P2+"f2_29",m1040(r.totalPayments));
-      if(r.refundOwed>=0){ set(P2+"f2_30",m1040(r.refundOwed)); set(P2+"f2_31",m1040(r.refundOwed)); }
-      else set(P2+"f2_35",m1040(-r.refundOwed));
-
-      form.updateFieldAppearances();
-      var out=await doc.save();
-      var blob=new Blob([out],{type:"application/pdf"});
-      var url=URL.createObjectURL(blob);
-      var a=document.createElement("a");
-      a.href=url; a.download="Form-1040-2025-filled.pdf"; a.click();
-      URL.revokeObjectURL(url);
+      var inp=toInput(), r=TaxEngine.computeTax(inp);
+      var doc=await fill1040Doc(inp, r);
+      dl(await doc.save(), "Form-1040-2025-filled.pdf");
     }catch(e){ alert("Could not generate the IRS PDF: "+e.message); }
+    finally{ if(btn){ btn.textContent=label; btn.disabled=false; } }
+  };
+
+  // ---- Generated schedule pages (mirror the app's schedulePages.ts) ----
+  function schedulesFor(inp, r){
+    var nz=function(x){return Number(x)||0;};
+    var out=[], half=function(){return r.selfEmploymentTax/2;};
+    if(nz(r.scheduleCNetProfit)||nz(inp.otherIncome)||nz(r.adjustmentsToIncome))
+      out.push({title:"Schedule 1 (Form 1040)",sub:"Additional Income and Adjustments to Income",rows:[
+        ["3","Business income or (loss) (Schedule C)",nz(r.scheduleCNetProfit)],
+        ["8","Other income",nz(inp.otherIncome)],
+        ["10","Total additional income (to Form 1040, line 8)",nz(r.scheduleCNetProfit)+nz(inp.otherIncome)],
+        ["","— Part II: Adjustments to Income —",null],
+        ["15","Deductible part of self-employment tax",half()],
+        ["25","Total adjustments (to Form 1040, line 10)",r.adjustmentsToIncome]]});
+    if(nz(r.alternativeMinimumTax)+nz(r.selfEmploymentTax)+nz(r.additionalMedicareTax)+nz(r.netInvestmentIncomeTax)>0)
+      out.push({title:"Schedule 2 (Form 1040)",sub:"Additional Taxes",rows:[
+        ["1","Alternative minimum tax (Form 6251)",nz(r.alternativeMinimumTax)],
+        ["3","Total Part I (to Form 1040, line 17)",nz(r.alternativeMinimumTax)],
+        ["","— Part II: Other Taxes —",null],
+        ["4","Self-employment tax (Schedule SE)",nz(r.selfEmploymentTax)],
+        ["11","Additional Medicare Tax",nz(r.additionalMedicareTax)],
+        ["12","Net investment income tax",nz(r.netInvestmentIncomeTax)],
+        ["21","Total other taxes (to Form 1040, line 23)",nz(r.totalOtherTaxes)]]});
+    if(nz(r.educationCreditNonRefundable)+nz(r.saversCredit)>0)
+      out.push({title:"Schedule 3 (Form 1040)",sub:"Additional Credits and Payments",rows:[
+        ["3","Education credits (Form 8863, nonrefundable)",nz(r.educationCreditNonRefundable)],
+        ["4","Retirement savings contributions credit (Form 8880)",nz(r.saversCredit)],
+        ["8","Total nonrefundable credits (to Form 1040, line 20)",nz(r.educationCreditNonRefundable)+nz(r.saversCredit)]]});
+    if(nz(r.selfEmploymentTax)>0)
+      out.push({title:"Schedule SE (Form 1040)",sub:"Self-Employment Tax",rows:[
+        ["2","Net profit from Schedule C",nz(r.scheduleCNetProfit)],
+        ["4a","Net earnings from self-employment (× 92.35%)",Math.round(nz(r.scheduleCNetProfit)*0.9235)],
+        ["12","Self-employment tax (to Schedule 2, line 4)",nz(r.selfEmploymentTax)],
+        ["13","Deduction for one-half of SE tax (to Schedule 1, line 15)",half()]]});
+    if(nz(r.childTaxCredit)+nz(r.otherDependentCredit)+nz(r.additionalChildTaxCredit)>0)
+      out.push({title:"Schedule 8812 (Form 1040)",sub:"Credits for Qualifying Children and Other Dependents",rows:[
+        ["1","Adjusted gross income (Form 1040, line 11)",nz(r.adjustedGrossIncome)],
+        ["12","Child tax credit / ODC (to Form 1040, line 19)",nz(r.childTaxCredit)+nz(r.otherDependentCredit)],
+        ["27","Additional child tax credit — refundable (to line 28)",nz(r.additionalChildTaxCredit)]]});
+    if(nz(r.qbiDeduction)>0)
+      out.push({title:"Form 8995",sub:"Qualified Business Income Deduction (Simplified)",rows:[
+        ["1","Total qualified business income",nz(inp.qualifiedBusinessIncome)],
+        ["5","QBI component (20% of line 1)",Math.round(nz(inp.qualifiedBusinessIncome)*0.2)],
+        ["15","QBI deduction (to Form 1040, line 13)",nz(r.qbiDeduction)]]});
+    if(nz(r.netCapitalGain)!==0){
+      var rows=[["16","Total capital gain or (loss) (to Form 1040, line 7)",nz(r.netCapitalGain)]];
+      if(nz(r.capitalLossCarryoverNextYear)<0) rows.push(["","Capital loss carryover to 2026: "+usd(Math.abs(nz(r.capitalLossCarryoverNextYear)),2),null]);
+      out.push({title:"Schedule D (Form 1040)",sub:"Capital Gains and Losses",rows:rows});
+    }
+    return out;
+  }
+
+  async function drawSchedulePage(out, sched, font, bold, taxpayer){
+    var rgb=PDFLib.rgb, page=out.addPage([612,792]);
+    var navy=rgb(0.09,0.15,0.33), gray=rgb(0.4,0.4,0.4);
+    page.drawText(sched.title,{x:40,y:748,size:15,font:bold,color:navy});
+    page.drawText(sched.sub,{x:40,y:730,size:10,font:font,color:gray});
+    page.drawText("2025 · "+taxpayer,{x:400,y:748,size:10,font:font,color:gray});
+    page.drawLine({start:{x:40,y:722},end:{x:572,y:722},thickness:1.5,color:navy});
+    var y=700;
+    sched.rows.forEach(function(row){
+      if(row[2]===null){ page.drawText(row[1],{x:40,y:y,size:9.5,font:bold,color:navy}); y-=20; return; }
+      var emph=/Total|to Form 1040|to Schedule|to line/i.test(row[1]);
+      var ff=emph?bold:font;
+      page.drawText(row[0],{x:44,y:y,size:9,font:font,color:gray});
+      page.drawText(row[1],{x:80,y:y,size:10,font:ff,color:emph?navy:rgb(0.15,0.15,0.15)});
+      var t=usd(row[2],2), w=ff.widthOfTextAtSize(t,10);
+      page.drawText(t,{x:572-w,y:y,size:10,font:ff,color:emph?navy:rgb(0.15,0.15,0.15)});
+      page.drawLine({start:{x:40,y:y-5},end:{x:572,y:y-5},thickness:0.4,color:rgb(0.85,0.88,0.92)});
+      y-=20;
+    });
+    page.drawText("Generated in the official schedule's line structure. Estimate for review; verify before filing.",{x:40,y:40,size:7.5,font:font,color:gray});
+  }
+
+  window.__downloadPacket=async function(btn){
+    if(typeof PDFLib==="undefined"){ alert("PDF library still loading — try again."); return; }
+    var label=btn?btn.textContent:""; if(btn){ btn.textContent="Building packet…"; btn.disabled=true; }
+    try{
+      var inp=toInput(), r=TaxEngine.computeTax(inp);
+      var name=((f.firstName||"")+" "+(f.lastName||"")).trim()||"Taxpayer";
+      var out=await PDFLib.PDFDocument.create();
+      var font=await out.embedFont(PDFLib.StandardFonts.Helvetica);
+      var bold=await out.embedFont(PDFLib.StandardFonts.HelveticaBold);
+      var rgb=PDFLib.rgb, navy=rgb(0.09,0.15,0.33);
+
+      // Filled official 1040
+      var filled=await fill1040Doc(inp, r);
+      var fdoc=await PDFLib.PDFDocument.load(await filled.save());
+      var pgs=await out.copyPages(fdoc, fdoc.getPageIndices());
+      pgs.forEach(function(p){ out.addPage(p); });
+      var included=["Form 1040"];
+
+      // Generated schedules
+      var scheds=schedulesFor(inp, r);
+      for(var i=0;i<scheds.length;i++){ await drawSchedulePage(out, scheds[i], font, bold, name); included.push(scheds[i].title+" — "+scheds[i].sub); }
+
+      // Coversheet at the front
+      var cover=out.insertPage(0,[612,792]);
+      cover.drawRectangle({x:0,y:722,width:612,height:70,color:navy});
+      cover.drawText("TaxFile Pro",{x:40,y:756,size:20,font:bold,color:rgb(1,1,1)});
+      cover.drawText("2025 Filing Packet — Form Checklist",{x:40,y:736,size:11,font:font,color:rgb(0.8,0.85,0.95)});
+      var y=680;
+      cover.drawText("Included (filled) in this packet:",{x:40,y:y,size:12,font:bold,color:navy}); y-=22;
+      included.forEach(function(t){ cover.drawText("[x]  "+t,{x:48,y:y,size:10.5,font:font,color:rgb(0.13,0.5,0.42)}); y-=16; });
+      cover.drawText("TaxFile Pro — Estimate for review; not filed with the IRS.",{x:40,y:40,size:8,font:font,color:rgb(0.4,0.4,0.4)});
+
+      dl(await out.save(), "Filing-Packet-2025.pdf");
+    }catch(e){ alert("Could not build the packet: "+e.message); }
     finally{ if(btn){ btn.textContent=label; btn.disabled=false; } }
   };
 

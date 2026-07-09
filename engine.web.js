@@ -37,9 +37,90 @@
   var OT_START={ single:150000, head_of_household:150000, married_separately:150000, married_jointly:300000, qualifying_surviving_spouse:300000 }, OT_PER1000=100;
   var MED_FLOOR=0.075, SALT_CAP=10000;
 
+  // --- v2 (pro) constants: AMT, education, saver's, SS worksheet, cap-loss ---
+  var AMT_EX={ single:88100, head_of_household:88100, married_jointly:137000, qualifying_surviving_spouse:137000, married_separately:68500 };
+  var AMT_PHASE={ single:626350, head_of_household:626350, married_jointly:1252700, qualifying_surviving_spouse:1252700, married_separately:626350 };
+  var AMT_PHASE_RATE=0.25, AMT_LOW=0.26, AMT_HIGH=0.28;
+  var AMT_BP={ single:239100, head_of_household:239100, married_jointly:239100, qualifying_surviving_spouse:239100, married_separately:119550 };
+  var SS_B1={ single:25000, head_of_household:25000, qualifying_surviving_spouse:25000, married_separately:25000, married_jointly:32000 };
+  var SS_B2={ single:34000, head_of_household:34000, qualifying_surviving_spouse:34000, married_separately:34000, married_jointly:44000 };
+  var AOTC_MAX=2500, AOTC_REFUND=0.40, LLC_RATE2=0.20, LLC_MAXEXP=10000;
+  var EDU_PH={ single:{s:80000,e:90000}, joint:{s:160000,e:180000} };
+  var SAVERS_MAX=2000;
+  var SAVERS={
+    married_jointly:[[0.5,47500],[0.2,51000],[0.1,79000],[0,Infinity]],
+    qualifying_surviving_spouse:[[0.5,47500],[0.2,51000],[0.1,79000],[0,Infinity]],
+    head_of_household:[[0.5,35625],[0.2,38250],[0.1,59250],[0,Infinity]],
+    single:[[0.5,23750],[0.2,25500],[0.1,39500],[0,Infinity]],
+    married_separately:[[0.5,23750],[0.2,25500],[0.1,39500],[0,Infinity]]
+  };
+  var CAP_LOSS_LIMIT=3000, CAP_LOSS_LIMIT_MFS=1500;
+
   function r2(n){ return Math.round((n+Number.EPSILON)*100)/100; }
   function pos(n){ return n>0?n:0; }
   function nz(n){ return (typeof n==="number"&&!isNaN(n))?n:0; }
+
+  // --- Social Security Benefits Worksheet (exact) ----------------------------
+  function ssWorksheet(status, benefits, otherIncome, taxExempt, adjustments){
+    if(benefits<=0) return 0;
+    var l2=r2(benefits*0.5);
+    var l5=l2+pos(otherIncome)+pos(taxExempt);
+    var l7=pos(l5-pos(adjustments));
+    var b1=SS_B1[status], b2=SS_B2[status];
+    var l9=pos(l7-b1);
+    if(l9<=0) return 0;
+    var l10=b2-b1;
+    var l11=pos(l9-l10);
+    var l12=Math.min(l9,l10);
+    var l13=r2(l12*0.5);
+    var l14=Math.min(l2,l13);
+    var l16=l14+r2(l11*0.85);
+    return r2(Math.min(l16, r2(benefits*0.85)));
+  }
+  // --- Alternative Minimum Tax (Form 6251) -----------------------------------
+  function amtTax(status, taxableIncome, usedStd, stdDed, saltAddback, otherPref, regularTax, pref){
+    var amti=taxableIncome + (usedStd?stdDed:0) + pos(saltAddback) + pos(otherPref);
+    amti=r2(pos(amti));
+    var ex=r2(pos(AMT_EX[status]-pos(amti-AMT_PHASE[status])*AMT_PHASE_RATE));
+    var base=pos(amti-ex);
+    var pr=Math.min(pos(pref),base), ord=pos(base-pr);
+    var bp=AMT_BP[status];
+    var tmt=(ord<=bp?ord*AMT_LOW:bp*AMT_LOW+(ord-bp)*AMT_HIGH)+pr*0.15;
+    return r2(pos(r2(tmt)-regularTax));
+  }
+  // --- Education credits (Form 8863) -----------------------------------------
+  function educationCredits(status, magi, aotcExp, aotcStudents, llcExp){
+    if(status==="married_separately") return {nonref:0, refund:0};
+    var joint=(status==="married_jointly"||status==="qualifying_surviving_spouse");
+    var ph=joint?EDU_PH.joint:EDU_PH.single;
+    var factor=1;
+    if(magi>ph.e) factor=0; else if(magi>ph.s) factor=(ph.e-magi)/(ph.e-ph.s);
+    var per=aotcStudents>0?aotcExp/aotcStudents:0, aotcGross=0;
+    for(var i=0;i<aotcStudents;i++){
+      var exp=Math.min(per,4000);
+      aotcGross+=Math.min(Math.min(exp,2000)+0.25*pos(Math.min(exp,4000)-2000), AOTC_MAX);
+    }
+    var aotc=r2(aotcGross*factor);
+    var refund=r2(aotc*AOTC_REFUND), nonref=r2(aotc-refund);
+    var llc=r2(Math.min(llcExp,LLC_MAXEXP)*LLC_RATE2*factor);
+    return { nonref:r2(nonref+llc), refund:refund };
+  }
+  // --- Saver's Credit (Form 8880) --------------------------------------------
+  function saversCredit(status, agi, contrib){
+    var tiers=SAVERS[status], rate=0;
+    for(var i=0;i<tiers.length;i++){ if(agi<=tiers[i][1]){ rate=tiers[i][0]; break; } }
+    var joint=(status==="married_jointly"||status==="qualifying_surviving_spouse");
+    var cap=joint?SAVERS_MAX*2:SAVERS_MAX;
+    return r2(Math.min(contrib,cap)*rate);
+  }
+  // --- Schedule D netting + loss limit + carryover ---------------------------
+  function scheduleD(status, st, lt){
+    var line16=st+lt;
+    if(line16>=0) return { gain:r2(line16), eligibleLT:r2(pos(Math.min(lt,line16))), carry:0 };
+    var limit=status==="married_separately"?CAP_LOSS_LIMIT_MFS:CAP_LOSS_LIMIT;
+    var allowed=Math.max(line16,-limit);
+    return { gain:r2(allowed), eligibleLT:0, carry:r2(line16-allowed) };
+  }
 
   function taxFromBrackets(amount, brackets){
     if(amount<=0) return 0;
@@ -163,18 +244,28 @@
     var s=inp.filingStatus;
     var wages=nz(inp.wages), interest=nz(inp.taxableInterest), ordDiv=nz(inp.ordinaryDividends);
     var qualDiv=Math.min(nz(inp.qualifiedDividends), ordDiv);
-    var ltcg=nz(inp.netLongTermCapitalGains), stcg=nz(inp.netShortTermCapitalGains);
-    var retire=nz(inp.retirementDistributions), ss=nz(inp.taxableSocialSecurity);
+    var stcg=nz(inp.netShortTermCapitalGains), ltcgIn=nz(inp.netLongTermCapitalGains);
+    var d=scheduleD(s, stcg, ltcgIn);
+    var capTotal=d.gain;
+    var retire=nz(inp.retirementDistributions);
     var seProfit=nz(inp.selfEmploymentNetProfit), other=nz(inp.otherIncome);
-    var capTotal=ltcg+stcg;
-    var totalIncome=r2(wages+interest+ordDiv+capTotal+retire+ss+seProfit+other);
+    var taxExempt=nz(inp.taxExemptInterest);
 
     var seNe=seProfit>0?seProfit*SE_FACTOR:0;
     var seT=seTax(seProfit, wages);
     var seDed=r2(seT/2);
     var adjustments=r2(nz(inp.adjustments)+seDed);
+
+    // Taxable Social Security via the exact worksheet (from gross benefits),
+    // unless an explicit taxable amount was provided.
+    var incomeExclSS=r2(wages+interest+ordDiv+capTotal+retire+seProfit+other);
+    var ss = (typeof inp.taxableSocialSecurity==="number")
+      ? r2(inp.taxableSocialSecurity)
+      : ssWorksheet(s, nz(inp.socialSecurityBenefits), incomeExclSS, taxExempt, adjustments);
+
+    var totalIncome=r2(incomeExclSS+ss);
     var agi=r2(pos(totalIncome-adjustments));
-    var magi=agi;
+    var magi=r2(agi+taxExempt);
     var earned=r2(wages+pos(seProfit));
 
     var std=r2(stdDeduction(inp, earned));
@@ -183,7 +274,7 @@
     var baseDed=method==="itemized"?item:std;
 
     var senior=seniorDeduction(inp, magi), tips=tipsDeduction(inp, magi), ot=overtimeDeduction(inp, magi);
-    var pref=r2(pos(qualDiv)+pos(ltcg));
+    var pref=r2(pos(qualDiv)+pos(d.eligibleLT));
     var tiBeforeQBI=r2(pos(agi-baseDed-senior-tips-ot));
     var qbi=qbiDeduction(nz(inp.qualifiedBusinessIncome), tiBeforeQBI, pref, s, warnings);
     var taxableIncome=r2(pos(tiBeforeQBI-qbi));
@@ -192,15 +283,23 @@
     var tw=taxWithPreferential(taxableIncome, cappedPref, s);
     var tentative=r2(tw.ordinaryTax+tw.preferentialTax);
 
-    var am=addlMedicare(wages, seNe, s);
-    var inv=r2(interest+ordDiv+capTotal);
-    var ni=niit(inv, magi, s);
-    var totalBefore=r2(tentative+seT+am+ni);
+    // Alternative Minimum Tax (Form 6251).
+    var saltAdd = method==="itemized" ? Math.min(nz(inp.stateAndLocalTaxes)||(inp.itemized&&nz(inp.itemized.stateAndLocalTaxes))||0, SALT_CAP) : 0;
+    var amt=amtTax(s, taxableIncome, method==="standard", std, saltAdd, nz(inp.amtPreferences), tentative, cappedPref);
 
-    var cc=childCredits(inp, agi, tentative, earned);
+    var am=addlMedicare(wages, seNe, s);
+    var inv=r2(interest+ordDiv+pos(capTotal));
+    var ni=niit(inv, magi, s);
+    var totalBefore=r2(tentative+amt+seT+am+ni);
+
+    // Credits: CTC/ODC (8812), education (8863), saver's (8880), EIC.
+    var taxForNonref=r2(tentative+amt);
+    var cc=childCredits(inp, agi, taxForNonref, earned);
+    var edu=educationCredits(s, magi, nz(inp.aotcExpenses), nz(inp.aotcStudents), nz(inp.llcExpenses));
+    var savers=saversCredit(s, agi, nz(inp.retirementContributions));
     var eic=eitc(inp, agi, earned, inv);
-    var nonRef=r2(Math.min(cc.ctc+cc.odc, tentative));
-    var refCredits=r2(cc.ctcRef+eic);
+    var nonRef=r2(Math.min(cc.ctc+cc.odc+edu.nonref+savers, taxForNonref));
+    var refCredits=r2(cc.ctcRef+eic+edu.refund);
 
     var totalTax=r2(pos(totalBefore-nonRef));
     var withholding=nz(inp.federalWithholding), estimated=nz(inp.estimatedPayments);
@@ -227,13 +326,17 @@
       ["13d","Qualified business income deduction",qbi],
       ["15","Taxable income",taxableIncome],
       ["16","Tax (with cap-gain worksheet)",tentative],
+      ["S2-1","Alternative Minimum Tax",amt],
       ["23a","Self-employment tax",seT],
       ["23b","Additional Medicare Tax",am],
       ["23c","Net Investment Income Tax",ni],
       ["19","Child Tax Credit (non-refundable)",cc.ctc],
       ["19b","Credit for Other Dependents",cc.odc],
+      ["S3-3","Education credits (nonrefundable)",edu.nonref],
+      ["S3-4","Saver's credit",savers],
       ["27","Earned Income Tax Credit",eic],
       ["28","Additional Child Tax Credit (refundable)",cc.ctcRef],
+      ["29","Education credit (refundable AOTC)",edu.refund],
       ["22","Total tax",totalTax],
       ["25","Federal tax withheld",withholding],
       ["26","Estimated payments",estimated],
@@ -242,12 +345,18 @@
     ];
 
     return {
-      totalIncome:totalIncome, adjustedGrossIncome:agi, deductionMethodUsed:method,
+      totalIncome:totalIncome, adjustedGrossIncome:agi, modifiedAGI:magi, deductionMethodUsed:method,
       standardDeduction:std, itemizedDeduction:item, deductionTaken:baseDed,
-      seniorDeduction:senior, tipsDeduction:tips, overtimeDeduction:ot, qbiDeduction:qbi,
+      seniorDeduction:senior, tipsDeduction:tips, overtimeDeduction:ot,
+      obbbaAdditionalDeductions:r2(senior+tips+ot), qbiDeduction:qbi,
       taxableIncome:taxableIncome, preferentialIncome:cappedPref, tentativeTax:tentative,
+      regularTax:tentative, alternativeMinimumTax:amt,
+      adjustmentsToIncome:adjustments, scheduleCNetProfit:seProfit,
+      taxableSocialSecurity:ss, netCapitalGain:capTotal, capitalLossCarryoverNextYear:d.carry,
       selfEmploymentTax:seT, additionalMedicareTax:am, netInvestmentIncomeTax:ni,
+      totalOtherTaxes:r2(seT+am+ni),
       childTaxCredit:cc.ctc, otherDependentCredit:cc.odc, additionalChildTaxCredit:cc.ctcRef,
+      educationCreditNonRefundable:edu.nonref, educationCreditRefundable:edu.refund, saversCredit:savers,
       earnedIncomeCredit:eic, totalTax:totalTax, totalPayments:totalPayments,
       refundOwed:refundOwed, effectiveRate:effRate, marginalRate:marginalRate(taxableIncome,s),
       lineItems:lineItems, warnings:warnings

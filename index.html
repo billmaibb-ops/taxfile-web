@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TaxFile Pro — 2025 Tax Calculator</title>
+<title>Free Tax Calculator — 2025 Federal Tax</title>
 <style>
   :root{--navy:#17284f;--accent:#21806b;--accent2:#2aa085;--bg:#f6f8fb;--card:#fff;--ink:#1c2333;--muted:#5b6472;--line:#e4e9f0;--danger:#b23030;}
   *{box-sizing:border-box}
@@ -112,7 +112,7 @@
 </head>
 <body>
   <div class="nav">
-    <div class="brand" style="cursor:pointer" onclick="window.__goHome&&window.__goHome()">TaxFile Pro</div>
+    <div class="brand" style="cursor:pointer" onclick="window.__goHome&&window.__goHome()">Free Tax Calculator</div>
     <div class="tag">2025 federal tax year · runs entirely in your browser</div>
   </div>
 
@@ -562,12 +562,12 @@
       // Coversheet at the front
       var cover=out.insertPage(0,[612,792]);
       cover.drawRectangle({x:0,y:722,width:612,height:70,color:navy});
-      cover.drawText("TaxFile Pro",{x:40,y:756,size:20,font:bold,color:rgb(1,1,1)});
+      cover.drawText("Free Tax Calculator",{x:40,y:756,size:20,font:bold,color:rgb(1,1,1)});
       cover.drawText("2025 Filing Packet — Form Checklist",{x:40,y:736,size:11,font:font,color:rgb(0.8,0.85,0.95)});
       var y=680;
       cover.drawText("Included (filled) in this packet:",{x:40,y:y,size:12,font:bold,color:navy}); y-=22;
       included.forEach(function(t){ cover.drawText("[x]  "+t,{x:48,y:y,size:10.5,font:font,color:rgb(0.13,0.5,0.42)}); y-=16; });
-      cover.drawText("TaxFile Pro — Estimate for review; not filed with the IRS.",{x:40,y:40,size:8,font:font,color:rgb(0.4,0.4,0.4)});
+      cover.drawText("Free Tax Calculator — Estimate for review; not filed with the IRS.",{x:40,y:40,size:8,font:font,color:rgb(0.4,0.4,0.4)});
 
       dl(await out.save(), "Filing-Packet-2025.pdf");
     }catch(e){ alert("Could not build the packet: "+e.message); }

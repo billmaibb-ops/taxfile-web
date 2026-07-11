@@ -1,764 +1,1718 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Free Tax Calculator — 2025 Federal Tax</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaxFilePro — Free 2025 Federal Tax Calculator | No Signup, 100% Private</title>
 <style>
-  :root{--navy:#17284f;--accent:#21806b;--accent2:#2aa085;--bg:#f6f8fb;--card:#fff;--ink:#1c2333;--muted:#5b6472;--line:#e4e9f0;--danger:#b23030;}
-  *{box-sizing:border-box}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
-  .nav{display:flex;align-items:center;justify-content:space-between;padding:16px 26px;background:var(--navy);color:#fff}
-  .nav .brand{font-weight:700;font-size:18px}
-  .nav .tag{font-size:12px;color:#a9bbe0}
-  .wrap{max-width:1040px;margin:0 auto;padding:26px 20px}
-  .steps{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
-  .pill{font-size:12px;padding:6px 12px;border-radius:999px;background:#eef2f8;color:var(--muted);border:1px solid var(--line);cursor:pointer}
-  .pill.active{background:var(--navy);color:#fff;border-color:var(--navy)}
-  .pill.done{background:var(--accent);color:#fff;border-color:var(--accent)}
-  .grid{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start}
-  @media(max-width:820px){.grid{grid-template-columns:1fr}}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
-  h2{margin:0 0 16px;color:var(--navy);font-size:20px}
-  .field{margin-bottom:14px}
-  label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
-  label .hint{font-weight:400;color:var(--muted)}
-  input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:15px;background:#fff;color:var(--ink)}
-  input:focus,select:focus{outline:2px solid var(--accent2);border-color:var(--accent2)}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .chk{display:flex;align-items:center;gap:8px;font-size:14px;margin:8px 0}
-  .chk input{width:auto}
-  .btn{display:inline-block;background:var(--accent);color:#fff;padding:11px 20px;border-radius:9px;font-weight:600;font-size:15px;border:none;cursor:pointer}
-  .btn:hover{background:var(--accent2)}
-  .btn.ghost{background:transparent;color:var(--navy);border:1px solid var(--line)}
-  .btn:disabled{opacity:.45;cursor:not-allowed}
-  .actions{display:flex;justify-content:space-between;margin-top:20px}
-  .summary{position:sticky;top:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
-  .summary h3{margin:0 0 10px;color:var(--navy)}
-  .big{font-size:30px;font-weight:800}
-  .big.refund{color:var(--accent)}.big.owed{color:var(--danger)}
-  .line{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px dashed var(--line)}
-  .line span:first-child{color:var(--muted)}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  td{padding:4px 0}
-  td.ln{color:var(--muted);width:52px}
-  td.amt{text-align:right}
-  tr.emph td{font-weight:700;color:var(--navy)}
-  .warn{background:#fff7e6;border:1px solid #ffe0a3;color:#7a5200;padding:10px 12px;border-radius:9px;font-size:13px;margin-top:10px}
-  .note{background:#eef6ff;border:1px solid #cfe4ff;color:#1b4b7a;padding:12px 14px;border-radius:10px;font-size:13px;margin-top:16px}
-  .disc{font-size:12px;color:var(--muted);margin-top:20px;border-top:1px solid var(--line);padding-top:14px}
-  @media print{.nav,.steps,.actions,.summary,.noprint{display:none!important}.grid{display:block}.card{border:none;padding:0}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f5f5;--surface:#ffffff;--border:#d0d5dd;--text:#1a1a1a;--muted:#6b7280;
+  --navy:#1a3a5c;--navy-light:#e8eef5;--red:#c0392b;--green:#1a7a4a;
+  --yellow:#f59e0b;--radius:6px;--shadow:0 1px 3px rgba(0,0,0,.1);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5}
+a{color:var(--navy);text-decoration:none}
+input[type=number],input[type=text],select{
+  width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);
+  font-size:14px;background:#fff;color:var(--text);outline:none;transition:border .15s;
+}
+input[type=number]:focus,input[type=text]:focus,select:focus{border-color:var(--navy);box-shadow:0 0 0 2px rgba(26,58,92,.15)}
+input[type=radio],input[type=checkbox]{margin-right:6px;cursor:pointer}
+label{font-size:13px;color:var(--muted);display:block;margin-bottom:3px}
+.view{display:none}
+.view.active{display:block}
 
-  /* Official Form 1040 replica */
-  #f1040{display:none;position:fixed;inset:0;background:#fff;overflow:auto;z-index:9999;padding:0}
-  body.show1040 #f1040{display:block}
-  body.show1040 .nav,body.show1040 .wrap{display:none}
-  .f1040-bar{position:sticky;top:0;background:var(--navy);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px 18px}
-  .f1040-bar button{margin-left:10px}
-  .page1040{max-width:760px;margin:16px auto;background:#fff;color:#000;padding:26px 30px;font-family:"Times New Roman",Georgia,serif;font-size:12px}
-  .f-head{display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px}
-  .f-head .t{font-size:20px;font-weight:700}
-  .f-head .sub{font-size:11px}
-  .f-omb{text-align:right;font-size:10px}
-  .f-row{display:flex;border-bottom:1px solid #999;padding:2px 0;align-items:flex-start}
-  .f-row .no{width:34px;font-weight:700;flex:none}
-  .f-row .lab{flex:1;padding-right:8px}
-  .f-row .amt{width:120px;text-align:right;border-left:1px solid #ccc;padding-left:6px;font-variant-numeric:tabular-nums}
-  .f-sec{background:#e9eef5;font-weight:700;padding:3px 4px;margin-top:10px;border-top:2px solid #000}
-  .f-id{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0}
-  .f-id div{font-size:12px}
-  .f-id b{display:block;font-size:10px;color:#333;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
-  .f-status{margin:6px 0;font-size:12px}
-  .f-status .box{display:inline-block;border:1.5px solid #000;width:12px;height:12px;text-align:center;line-height:11px;margin-right:4px;vertical-align:middle;font-weight:700}
-  .f-note{font-size:10px;color:#444;margin-top:14px;border-top:1px solid #000;padding-top:6px}
-  .f-pg{text-align:center;font-size:10px;color:#555;margin-top:10px}
-  @media print{
-    .f1040-bar{display:none!important}
-    body.show1040 *{visibility:hidden}
-    body.show1040 #f1040,body.show1040 #f1040 *{visibility:visible}
-    #f1040{position:absolute;overflow:visible}
-    .page1040{margin:0 auto;page-break-after:always}
-    @page{size:letter;margin:0.5in}
-  }
+/* HEADER */
+header{background:var(--navy);color:#fff;padding:12px 24px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+header .logo{font-size:22px;font-weight:700;letter-spacing:-.5px}
+header .tagline{font-size:12px;opacity:.7;margin-top:1px}
+.breadcrumb{background:#e8eef5;border-bottom:1px solid var(--border);padding:8px 24px;font-size:13px;color:var(--muted)}
+.breadcrumb span{color:var(--navy);font-weight:500}
 
-  /* Entity chooser home */
-  .hero{text-align:center;max-width:680px;margin:18px auto 22px}
-  .badge{display:inline-block;background:#e6f5ef;color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.4px;padding:5px 12px;border-radius:999px;margin-bottom:14px;text-transform:uppercase}
-  .hero h1{font-size:34px;color:var(--navy);margin:0 0 10px;letter-spacing:-.5px}
-  .hero p{color:var(--muted);font-size:16px;margin:0;line-height:1.5}
-  .tbar{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;max-width:900px;margin:0 auto 26px}
-  .tbar-item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px}
-  .tbar-ico{width:26px;height:26px;border-radius:8px;background:#eef4f1;display:flex;align-items:center;justify-content:center;font-size:14px}
-  .tbar-item b{display:block;font-size:13px;color:var(--ink)}
-  .tbar-item span{font-size:11.5px;color:var(--muted)}
-  .entity-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:940px;margin:0 auto}
-  @media(max-width:760px){.entity-grid{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:480px){.entity-grid{grid-template-columns:1fr}}
-  .ecard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 20px;cursor:pointer;transition:transform .14s,box-shadow .14s,border-color .14s;text-align:left;position:relative}
-  .ecard:hover{transform:translateY(-4px);box-shadow:0 14px 32px rgba(23,40,79,.13);border-color:var(--accent2)}
-  .ecard .ico{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
-  .ecard .ico svg{width:24px;height:24px}
-  .ecard h3{margin:0 0 4px;color:var(--navy);font-size:17px}
-  .ecard .form{font-size:11.5px;color:var(--accent);font-weight:700;letter-spacing:.4px;text-transform:uppercase}
-  .ecard p{margin:8px 0 0;font-size:13px;color:var(--muted);line-height:1.45}
-  .ecard .go{margin-top:12px;font-size:13px;font-weight:700;color:var(--accent);opacity:0;transform:translateX(-4px);transition:opacity .14s,transform .14s}
-  .ecard:hover .go{opacity:1;transform:translateX(0)}
-  .homefoot{text-align:center;color:var(--muted);font-size:12.5px;max-width:900px;margin:30px auto 10px;border-top:1px solid var(--line);padding-top:18px}
-  .backlink{display:inline-block;margin-bottom:14px;color:var(--navy);font-size:14px;cursor:pointer;font-weight:600}
-  .backlink:hover{color:var(--accent)}
-  .k1card{background:#f2f7f5;border:1px solid #cfe6de;border-radius:12px;padding:14px;margin:8px 0}
-  .k1card b{color:var(--navy)}
+/* LANDING */
+.landing-hero{text-align:center;padding:40px 24px 24px;max-width:760px;margin:0 auto}
+.landing-hero h1{font-size:28px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.landing-hero p{color:var(--muted);font-size:15px}
+.trust-badges{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:20px 0}
+.badge{background:#fff;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--text)}
+.filer-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;max-width:900px;margin:0 auto;padding:0 16px 40px}
+.filer-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:18px 20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+.filer-card .form-tag{font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--navy);background:var(--navy-light);padding:2px 8px;border-radius:3px;display:inline-block}
+.filer-card h3{font-size:16px;font-weight:600;color:var(--text);margin-top:2px}
+.filer-card p{font-size:13px;color:var(--muted);flex:1}
+.btn{display:inline-block;padding:8px 18px;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:background .15s,transform .1s}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:#152e4a}
+.btn-sm{padding:6px 14px;font-size:13px}
+.btn-outline{background:#fff;color:var(--navy);border:1px solid var(--navy)}
+.btn-outline:hover{background:var(--navy-light)}
+
+/* FORM LAYOUT */
+.form-container{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+.form-section{background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)}
+.form-section summary{padding:14px 18px;font-size:14px;font-weight:600;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;background:var(--navy-light);color:var(--navy)}
+.form-section summary::after{content:"▼";font-size:11px;transition:transform .2s}
+.form-section[open] summary::after{transform:rotate(180deg)}
+.section-body{padding:16px 18px}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+.field-full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:3px}
+.field .lnum{font-size:11px;color:var(--navy);font-weight:600}
+.status-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.status-btn{padding:7px 16px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:13px;font-weight:500;background:#fff;color:var(--text);transition:all .15s}
+.status-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+hr{border:none;border-top:1px solid var(--border);margin:14px 0}
+
+/* RESULT BOX */
+.result-box{background:#fff;border:2px solid var(--navy);border-radius:8px;padding:20px;margin-top:18px}
+.result-box h3{color:var(--navy);margin-bottom:14px;font-size:16px;border-bottom:1px solid var(--border);padding-bottom:8px}
+.result-line{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:14px;border-bottom:1px solid #f0f0f0}
+.result-line:last-child{border:none}
+.result-line.total{font-weight:700;font-size:16px;padding-top:10px;margin-top:6px;border-top:2px solid var(--border);border-bottom:none}
+.result-line.owed{color:var(--red)}
+.result-line.refund{color:var(--green)}
+.result-line .val{font-weight:600;min-width:110px;text-align:right}
+.amount-big{font-size:28px;font-weight:700;text-align:center;padding:16px 0 4px}
+.amount-big.owed{color:var(--red)}
+.amount-big.refund{color:var(--green)}
+.amount-label{text-align:center;font-size:13px;color:var(--muted);margin-bottom:12px}
+
+/* BRACKET TABLE */
+.bracket-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+.bracket-table th{background:var(--navy-light);color:var(--navy);padding:6px 10px;text-align:left;font-weight:600}
+.bracket-table td{padding:5px 10px;border-bottom:1px solid #f0f0f0}
+.bracket-table tr:last-child td{border:none}
+
+/* K-1 TABLE */
+.k1-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
+.k1-table th{background:#f8f9fa;padding:7px 10px;text-align:left;font-weight:600;border-bottom:2px solid var(--border)}
+.k1-table td{padding:6px 8px;border-bottom:1px solid var(--border)}
+.k1-table input{padding:4px 6px;font-size:13px}
+.k1-add-btn{margin-top:8px}
+
+/* ACTIONS BAR */
+.actions-bar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.disclaimer{font-size:11px;color:var(--muted);text-align:center;padding:16px;border-top:1px solid var(--border);margin-top:20px}
+
+/* PRIOR/CURRENT COL TABLE */
+.two-col-table{width:100%;border-collapse:collapse;font-size:13px}
+.two-col-table th,.two-col-table td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.two-col-table th{background:var(--navy-light);color:var(--navy);font-weight:600;text-align:center}
+.two-col-table td:first-child{font-weight:500}
+.two-col-table td input{padding:4px 8px;font-size:13px}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  .field-grid{grid-template-columns:1fr}
+  .field-grid.cols3{grid-template-columns:1fr}
+  .field-full{grid-column:1}
+  .two-col-table{font-size:12px}
+  .landing-hero h1{font-size:22px}
+  .filer-grid{grid-template-columns:1fr}
+}
+
+/* PRINT */
+@media print{
+  header,nav,.breadcrumb,.actions-bar,.back-btn,.btn-outline,details summary::after{display:none!important}
+  details{display:block!important}
+  details[open] summary{display:block}
+  body{background:#fff;font-size:12px}
+  .result-box{border:2px solid #000;page-break-inside:avoid}
+  .form-section{border:1px solid #999;page-break-inside:avoid}
+}
+
+/* ═══════════════════ LANDING PAGE REDESIGN ═══════════════════ */
+
+/* Hero */
+.lp-hero{background:linear-gradient(135deg,#0d2340 0%,#1a3a5c 55%,#1e4870 100%);color:#fff;padding:60px 24px 52px;text-align:center}
+.lp-year-badge{display:inline-block;background:rgba(255,255,255,.14);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:22px}
+.lp-h1{font-size:38px;font-weight:800;line-height:1.14;max-width:700px;margin:0 auto 18px;letter-spacing:-.6px;color:#fff}
+.lp-h1 em{font-style:normal;color:#5eead4}
+.lp-sub{font-size:16px;color:rgba(255,255,255,.72);max-width:530px;margin:0 auto 30px;line-height:1.65}
+.lp-cta-row{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+.lp-btn-hero{display:inline-block;background:#2dd4bf;color:#0d2340;font-weight:700;font-size:15px;padding:13px 30px;border-radius:7px;text-decoration:none;border:none;cursor:pointer;transition:background .15s,transform .12s;letter-spacing:-.1px}
+.lp-btn-hero:hover{background:#14b8a6;transform:translateY(-2px);color:#0d2340}
+.lp-cta-note{font-size:13px;color:rgba(255,255,255,.48);letter-spacing:.01em}
+
+/* Trust strip */
+.lp-trust-strip{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-bottom:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.lp-trust-item{display:flex;align-items:flex-start;gap:13px;padding:20px 18px;border-right:1px solid var(--border)}
+.lp-trust-item:last-child{border-right:none}
+.lp-trust-icon{font-size:22px;flex-shrink:0;line-height:1}
+.lp-trust-body{display:flex;flex-direction:column;gap:3px}
+.lp-trust-body strong{font-size:13px;font-weight:700;color:var(--text)}
+.lp-trust-body span{font-size:12px;color:var(--muted);line-height:1.45}
+
+/* Filer section wrapper */
+.lp-filer-wrap{max-width:980px;margin:0 auto;padding:52px 20px 0}
+.lp-section-hdr{text-align:center;margin-bottom:36px}
+.lp-section-title{font-size:28px;font-weight:800;color:var(--navy);letter-spacing:-.4px}
+.lp-section-sub{font-size:15px;color:var(--muted);margin-top:8px;line-height:1.55}
+
+/* Group labels */
+.lp-group-label{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.lp-group-label .lp-gl-title{flex:1}
+.lp-rare-tag{background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:12px;padding:3px 11px;font-size:10px;font-weight:700;text-transform:none;letter-spacing:0;white-space:nowrap}
+
+/* Card grid */
+.lp-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-bottom:36px}
+.lp-card{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:22px 20px 18px;display:flex;flex-direction:column;gap:7px;box-shadow:0 1px 4px rgba(0,0,0,.06);transition:box-shadow .15s,transform .15s,border-color .15s;cursor:default}
+.lp-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.1);transform:translateY(-3px)}
+.lp-card-personal{border-top:3px solid var(--navy)}
+.lp-card-personal:hover{border-color:var(--navy)}
+.lp-card-biz{border-top:3px solid #0891b2}
+.lp-card-biz:hover{border-color:#0891b2}
+.lp-card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lp-ftag{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:2px 8px;border-radius:3px}
+.lp-ftag-p{background:var(--navy-light);color:var(--navy)}
+.lp-ftag-b{background:#e0f2fe;color:#0369a1}
+.lp-popular{font-size:10px;font-weight:600;color:#065f46;background:#d1fae5;border-radius:10px;padding:2px 9px}
+.lp-card-icon{font-size:28px;margin:2px 0 -2px}
+.lp-card-title{font-size:17px;font-weight:700;color:var(--text)}
+.lp-card-desc{font-size:13px;color:var(--muted);flex:1;line-height:1.48}
+.lp-card-btn{margin-top:6px;padding:10px 16px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s;text-align:center}
+.lp-card-btn:hover{transform:translateY(-1px)}
+.lp-btn-p{background:var(--navy);color:#fff}
+.lp-btn-p:hover{background:#152e4a}
+.lp-btn-b{background:#0891b2;color:#fff}
+.lp-btn-b:hover{background:#0369a1}
+
+/* Comparison table section */
+.lp-compare-section{background:#f8fafc;border-top:1px solid var(--border);padding:52px 20px 56px;text-align:center;margin-top:8px}
+.lp-compare-wrap{max-width:720px;margin:24px auto 0;overflow-x:auto}
+.lp-ctable{width:100%;border-collapse:collapse;font-size:14px;text-align:left;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.lp-ctable thead tr{background:var(--navy-light)}
+.lp-ctable th{padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--border)}
+.lp-ctable th.lp-col-us{color:var(--green);background:#f0fdf4}
+.lp-ctable td{padding:10px 16px;border-bottom:1px solid #f1f5f9}
+.lp-ctable tbody tr:last-child td{border-bottom:none}
+.lp-ctable td:first-child{color:var(--text);font-weight:500}
+.lp-ctable .lp-col-us{background:#f8fffb}
+.lp-ctable .lp-yes{color:var(--green);font-weight:700}
+.lp-ctable .lp-no{color:#9ca3af}
+.lp-ctable .lp-paid{color:#b45309}
+.lp-ctable tbody tr:hover{background:#fafbff}
+
+/* Responsive */
+@media(max-width:860px){
+  .lp-trust-strip{grid-template-columns:1fr 1fr}
+  .lp-trust-item{border-bottom:1px solid var(--border)}
+  .lp-h1{font-size:28px}
+}
+@media(max-width:520px){
+  .lp-trust-strip{grid-template-columns:1fr}
+  .lp-card-grid{grid-template-columns:1fr}
+  .lp-h1{font-size:23px}
+  .lp-sub{font-size:14px}
+  .lp-ctable{font-size:12px}
+  .lp-ctable td,.lp-ctable th{padding:8px 10px}
+}
 </style>
 </head>
 <body>
-  <div class="nav">
-    <div class="brand" style="cursor:pointer" onclick="window.__goHome&&window.__goHome()">Free Tax Calculator</div>
-    <div class="tag">2025 federal tax year · runs entirely in your browser</div>
-  </div>
 
-  <div class="wrap">
-    <div id="home"></div>
-    <div id="filer" style="display:none">
-      <div class="steps" id="steps"></div>
-      <div class="grid">
-        <div class="card" id="panel"></div>
-        <div class="summary" id="summary"></div>
+<header>
+  <div>
+    <div class="logo">TaxFilePro</div>
+    <div class="tagline">Free 2025 Federal Tax Calculator · 7 Return Types · No Signup</div>
+  </div>
+  <div style="margin-left:auto;font-size:12px;opacity:.6;display:flex;align-items:center;gap:6px">
+    <span>🔒</span><span>runs entirely in your browser</span>
+  </div>
+</header>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb" id="breadcrumb" style="display:none">
+  <a href="#" onclick="showView(0);return false">Home</a> › <span id="bc-title">Form 1040</span>
+</div>
+
+<!-- ═══════════════════════ VIEW 0: LANDING ═══════════════════════ -->
+<div id="view0" class="view active">
+
+  <!-- HERO -->
+  <section class="lp-hero">
+    <div class="lp-year-badge">2025 Federal Tax Year</div>
+    <h1 class="lp-h1">Free tax returns for every filer —<br><em>individual, LLC, S&nbsp;Corp, nonprofit.</em></h1>
+    <p class="lp-sub">No signup. No server uploads. Your numbers stay 100% in your browser and never reach a server.</p>
+    <div class="lp-cta-row">
+      <button class="lp-btn-hero" onclick="document.getElementById('lp-filer-section').scrollIntoView({behavior:'smooth'})">Choose your form →</button>
+      <span class="lp-cta-note">7 return types · all free · no account required</span>
+    </div>
+  </section>
+
+  <!-- TRUST STRIP -->
+  <div class="lp-trust-strip">
+    <div class="lp-trust-item">
+      <div class="lp-trust-icon">🔒</div>
+      <div class="lp-trust-body">
+        <strong>Browser-Private</strong>
+        <span>Zero data transmitted. Your numbers never leave your device.</span>
+      </div>
+    </div>
+    <div class="lp-trust-item">
+      <div class="lp-trust-icon">✓</div>
+      <div class="lp-trust-body">
+        <strong>Always Free</strong>
+        <span>No account, no paywall — every entity type, no exceptions.</span>
+      </div>
+    </div>
+    <div class="lp-trust-item">
+      <div class="lp-trust-icon">🧮</div>
+      <div class="lp-trust-body">
+        <strong>2025-Accurate</strong>
+        <span>Updated IRS brackets &amp; figures. 90+ built-in tax tests.</span>
+      </div>
+    </div>
+    <div class="lp-trust-item">
+      <div class="lp-trust-icon">📄</div>
+      <div class="lp-trust-body">
+        <strong>PDF-Ready</strong>
+        <span>Get a complete, print-ready return in minutes.</span>
       </div>
     </div>
   </div>
 
-  <div id="f1040"></div>
+  <!-- FILER SECTION -->
+  <div class="lp-filer-wrap" id="lp-filer-section">
+    <div class="lp-section-hdr">
+      <h2 class="lp-section-title">Who's filing this year?</h2>
+      <p class="lp-section-sub">Pick your return type and we'll do the math, fill the forms, and hand you a ready-to-file PDF.</p>
+    </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-<script src="engine.web.js"></script>
-<script src="business.web.js"></script>
+    <!-- Personal Returns -->
+    <div class="lp-group-label">
+      <span class="lp-gl-title">Personal Returns</span>
+    </div>
+    <div class="lp-card-grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));margin-bottom:40px">
+      <div class="lp-card lp-card-personal">
+        <div class="lp-card-top">
+          <span class="lp-ftag lp-ftag-p">FORM 1040</span>
+          <span class="lp-popular">Most Common</span>
+        </div>
+        <div class="lp-card-icon">👤</div>
+        <div class="lp-card-title">Individual</div>
+        <div class="lp-card-desc">Employees, families, retirees, and investors filing a personal return.</div>
+        <button class="lp-card-btn lp-btn-p" onclick="showView(1)">Start filing →</button>
+      </div>
+      <div class="lp-card lp-card-personal">
+        <div class="lp-card-top">
+          <span class="lp-ftag lp-ftag-p">1040 + SCHEDULE C</span>
+        </div>
+        <div class="lp-card-icon">💼</div>
+        <div class="lp-card-title">Self-Employed</div>
+        <div class="lp-card-desc">Freelancers, gig workers, and sole proprietors with business income.</div>
+        <button class="lp-card-btn lp-btn-p" onclick="showView(2)">Start filing →</button>
+      </div>
+    </div>
+
+    <!-- Business & Entity Returns -->
+    <div class="lp-group-label">
+      <span class="lp-gl-title">Business &amp; Entity Returns</span>
+      <span class="lp-rare-tag">🎯 Free — Rare in this space</span>
+    </div>
+    <div class="lp-card-grid">
+      <div class="lp-card lp-card-biz">
+        <div class="lp-card-top"><span class="lp-ftag lp-ftag-b">FORM 1120</span></div>
+        <div class="lp-card-icon">🏢</div>
+        <div class="lp-card-title">C Corporation</div>
+        <div class="lp-card-desc">Corporations taxed at a flat 21% at the entity level. Quarterly estimated payments included.</div>
+        <button class="lp-card-btn lp-btn-b" onclick="showView(3)">Start filing →</button>
+      </div>
+      <div class="lp-card lp-card-biz">
+        <div class="lp-card-top"><span class="lp-ftag lp-ftag-b">FORM 1120-S</span></div>
+        <div class="lp-card-icon">🏬</div>
+        <div class="lp-card-title">S Corporation</div>
+        <div class="lp-card-desc">Pass-through income reported to owners on Schedule K-1.</div>
+        <button class="lp-card-btn lp-btn-b" onclick="showView(4)">Start filing →</button>
+      </div>
+      <div class="lp-card lp-card-biz">
+        <div class="lp-card-top"><span class="lp-ftag lp-ftag-b">FORM 1065</span></div>
+        <div class="lp-card-icon">🤝</div>
+        <div class="lp-card-title">Partnership / LLC</div>
+        <div class="lp-card-desc">Multi-owner pass-through with K-1 allocations for each partner.</div>
+        <button class="lp-card-btn lp-btn-b" onclick="showView(5)">Start filing →</button>
+      </div>
+      <div class="lp-card lp-card-biz">
+        <div class="lp-card-top"><span class="lp-ftag lp-ftag-b">FORM 1041</span></div>
+        <div class="lp-card-icon">⚖️</div>
+        <div class="lp-card-title">Estate &amp; Trust</div>
+        <div class="lp-card-desc">Fiduciary returns using the compressed trust brackets.</div>
+        <button class="lp-card-btn lp-btn-b" onclick="showView(6)">Start filing →</button>
+      </div>
+      <div class="lp-card lp-card-biz">
+        <div class="lp-card-top"><span class="lp-ftag lp-ftag-b">FORM 990 / 990-T</span></div>
+        <div class="lp-card-icon">🏛️</div>
+        <div class="lp-card-title">Nonprofit</div>
+        <div class="lp-card-desc">Tax-exempt organizations; 21% only on unrelated business income.</div>
+        <button class="lp-card-btn lp-btn-b" onclick="showView(7)">Start filing →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARISON TABLE -->
+  <section class="lp-compare-section">
+    <h2 class="lp-section-title">How TaxFilePro compares</h2>
+    <p class="lp-section-sub">The only free tool that covers business entities — with no signup and no server uploads.</p>
+    <div class="lp-compare-wrap">
+      <table class="lp-ctable">
+        <thead>
+          <tr>
+            <th></th>
+            <th class="lp-col-us">TaxFilePro</th>
+            <th>TurboTax</th>
+            <th>FreeTaxUSA</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Individual (Form 1040)</td>
+            <td class="lp-col-us lp-yes">✓ Free</td>
+            <td class="lp-yes">✓ Free tier</td>
+            <td class="lp-yes">✓ Free</td>
+          </tr>
+          <tr>
+            <td>Self-Employed (Sch C)</td>
+            <td class="lp-col-us lp-yes">✓ Free</td>
+            <td class="lp-paid">💰 Paid upgrade</td>
+            <td class="lp-yes">✓ Free</td>
+          </tr>
+          <tr>
+            <td>S Corp / C Corp / LLC</td>
+            <td class="lp-col-us lp-yes">✓ Free</td>
+            <td class="lp-paid">💰 Business package</td>
+            <td class="lp-no">✗ Not available</td>
+          </tr>
+          <tr>
+            <td>Estate &amp; Trust / Nonprofit</td>
+            <td class="lp-col-us lp-yes">✓ Free</td>
+            <td class="lp-no">✗ Not available</td>
+            <td class="lp-no">✗ Not available</td>
+          </tr>
+          <tr>
+            <td>No account or signup</td>
+            <td class="lp-col-us lp-yes">✓ None required</td>
+            <td class="lp-no">✗ Account required</td>
+            <td class="lp-no">✗ Account required</td>
+          </tr>
+          <tr>
+            <td>Runs 100% in your browser</td>
+            <td class="lp-col-us lp-yes">✓ No uploads</td>
+            <td class="lp-no">✗ Server-side</td>
+            <td class="lp-no">✗ Server-side</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- FOOTER DISCLAIMER -->
+  <div class="disclaimer" style="padding:18px 24px;border-top:1px solid var(--border);background:#fff">
+    For estimation purposes only. Not tax advice. Not affiliated with the IRS. Does not e-file. Always consult a qualified tax professional for your specific situation.
+  </div>
+
+</div>
+
+<!-- ═══════════════════════ VIEW 1: FORM 1040 ═══════════════════════ -->
+<div id="view1" class="view">
+<div class="form-container">
+  <div class="actions-bar">
+    <button class="btn btn-outline btn-sm back-btn" onclick="showView(0)">← Home</button>
+    <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print / Save PDF</button>
+  </div>
+  <h2 style="color:var(--navy);margin-bottom:14px">Form 1040 — U.S. Individual Income Tax Return (2025)</h2>
+
+  <!-- Filing Status -->
+  <div class="form-section" open>
+    <details open>
+      <summary>Filing Status</summary>
+      <div class="section-body">
+        <div class="status-row">
+          <button class="status-btn active" id="fs-S" onclick="setStatus('S')">Single</button>
+          <button class="status-btn" id="fs-MFJ" onclick="setStatus('MFJ')">Married Filing Jointly</button>
+          <button class="status-btn" id="fs-MFS" onclick="setStatus('MFS')">Married Filing Separately</button>
+          <button class="status-btn" id="fs-HOH" onclick="setStatus('HOH')">Head of Household</button>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- Income -->
+  <details class="form-section" open>
+    <summary>Income</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><span class="lnum">Line 1a</span><label>W-2 Wages, Salaries, Tips</label><input type="number" id="wages" min="0" oninput="calc1040()"></div>
+        <div class="field"><span class="lnum">Line 2b</span><label>Taxable Interest Income</label><input type="number" id="interest" min="0" oninput="calc1040()"></div>
+        <div class="field"><span class="lnum">Line 3a</span><label>Qualified Dividends</label><input type="number" id="qualDiv" min="0" oninput="calc1040()"></div>
+        <div class="field"><span class="lnum">Line 3b</span><label>Ordinary Dividends (total)</label><input type="number" id="ordDiv" min="0" oninput="calc1040()"></div>
+        <div class="field"><span class="lnum">Line 4b</span><label>IRA Distributions (taxable)</label><input type="number" id="iraDistrib" min="0" oninput="calc1040()"></div>
+        <div class="field"><span class="lnum">Line 5a</span><label>Social Security Benefits (total)</label><input type="number" id="ssBenefits" min="0" oninput="calc1040()"></div>
+        <div class="field"><span class="lnum">Line 7 (ST)</span><label>Short-Term Capital Gains</label><input type="number" id="stcg" oninput="calc1040()"></div>
+        <div class="field"><span class="lnum">Line 7 (LT)</span><label>Long-Term Capital Gains</label><input type="number" id="ltcg" oninput="calc1040()"></div>
+        <div class="field field-full"><span class="lnum">Other</span><label>Other Income</label><input type="number" id="otherIncome" oninput="calc1040()"></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Adjustments -->
+  <details class="form-section">
+    <summary>Adjustments to Income (Above-the-Line Deductions)</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Student Loan Interest (max $2,500; phases out $75k–$90k single, $155k–$185k MFJ)</label><input type="number" id="stuLoan" min="0" oninput="calc1040()"></div>
+        <div class="field"><label>IRA Deduction</label><input type="number" id="iraDeduct" min="0" oninput="calc1040()"></div>
+        <div class="field"><label>HSA Deduction</label><input type="number" id="hsa" min="0" oninput="calc1040()"></div>
+        <div class="field"><label>Self-Employment Deduction (½ SE tax; auto-filled from Schedule C if used)</label><input type="number" id="seDeduct" min="0" oninput="calc1040()"></div>
+        <div class="field"><label>Other Adjustments</label><input type="number" id="otherAdj" min="0" oninput="calc1040()"></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Deductions -->
+  <details class="form-section">
+    <summary>Deductions</summary>
+    <div class="section-body">
+      <div style="margin-bottom:12px">
+        <label style="font-size:14px;font-weight:600;color:var(--text);display:inline">Deduction Type:</label>&nbsp;
+        <label><input type="radio" name="dedType" value="standard" checked onchange="toggleItemized()"> Standard Deduction</label>&nbsp;&nbsp;
+        <label><input type="radio" name="dedType" value="itemized" onchange="toggleItemized()"> Itemized Deductions</label>
+      </div>
+      <div id="std-ded-display" style="background:var(--navy-light);padding:10px 14px;border-radius:4px;font-size:14px;color:var(--navy);font-weight:600"></div>
+      <div id="itemized-section" style="display:none;margin-top:14px">
+        <div class="field-grid">
+          <div class="field"><label>Mortgage Interest</label><input type="number" id="mortgageInt" min="0" oninput="calc1040()"></div>
+          <div class="field"><label>State &amp; Local Taxes (SALT — capped at $10,000)</label><input type="number" id="salt" min="0" oninput="calc1040()"></div>
+          <div class="field"><label>Charitable Contributions</label><input type="number" id="charitable" min="0" oninput="calc1040()"></div>
+          <div class="field"><label>Medical Expenses (total — 7.5% AGI floor applies)</label><input type="number" id="medical" min="0" oninput="calc1040()"></div>
+          <div class="field"><label>Other Itemized Deductions</label><input type="number" id="otherItemized" min="0" oninput="calc1040()"></div>
+        </div>
+        <div id="itemized-total" style="margin-top:10px;font-size:14px;color:var(--navy)"></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Credits -->
+  <details class="form-section">
+    <summary>Credits</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Number of Qualifying Children Under 17 (Child Tax Credit: $2,000/child)</label><input type="number" id="numChildren" min="0" value="0" oninput="calc1040()"></div>
+        <div class="field"><label>Child &amp; Dependent Care Expenses</label><input type="number" id="depCare" min="0" oninput="calc1040()"></div>
+        <div class="field"><label>Education Credits (Lifetime Learning / American Opportunity)</label><input type="number" id="eduCredit" min="0" oninput="calc1040()"></div>
+        <div class="field"><label>Other Credits</label><input type="number" id="otherCredits" min="0" oninput="calc1040()"></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Payments -->
+  <details class="form-section">
+    <summary>Payments &amp; Withholding</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Federal Income Tax Withheld (W-2 Box 2)</label><input type="number" id="withheld" min="0" oninput="calc1040()"></div>
+        <div class="field"><label>Estimated Tax Payments Made</label><input type="number" id="estPmts" min="0" oninput="calc1040()"></div>
+        <div class="field"><label>Other Payments / Refundable Credits</label><input type="number" id="otherPmts" min="0" oninput="calc1040()"></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- AMT Preferences -->
+  <details class="form-section">
+    <summary>Alternative Minimum Tax (AMT) Preferences</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>ISO Spread / Other AMT Preference Items</label><input type="number" id="amtPref" min="0" oninput="calc1040()"></div>
+        <div class="field"><label>Itemized Deductions Disallowed for AMT</label><input type="number" id="amtAddback" min="0" oninput="calc1040()"></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- RESULT -->
+  <div class="result-box" id="result1040">
+    <h3>Tax Summary</h3>
+    <div id="result1040-content">
+      <p style="color:var(--muted);font-size:13px">Enter income above to see your tax calculation.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════ VIEW 2: SCHEDULE C + 1040 ═══════════════════════ -->
+<div id="view2" class="view">
+<div class="form-container">
+  <div class="actions-bar">
+    <button class="btn btn-outline btn-sm back-btn" onclick="showView(0)">← Home</button>
+    <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print / Save PDF</button>
+  </div>
+  <h2 style="color:var(--navy);margin-bottom:14px">Schedule C + Form 1040 — Self-Employed (2025)</h2>
+
+  <!-- Business Info -->
+  <details class="form-section" open>
+    <summary>Business Information</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Business Name</label><input type="text" id="sc-bizname" placeholder="Your Business Name"></div>
+        <div class="field"><label>Principal Business Code (NAICS)</label><input type="text" id="sc-bizcode" placeholder="e.g. 541511"></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Schedule C Income -->
+  <details class="form-section" open>
+    <summary>Schedule C — Business Income</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><span class="lnum">Line 1</span><label>Gross Receipts / Sales</label><input type="number" id="sc-gross" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 2</span><label>Returns and Allowances</label><input type="number" id="sc-returns" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 4</span><label>Cost of Goods Sold</label><input type="number" id="sc-cogs" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 5 (calc)</span><label>Gross Profit</label><input type="number" id="sc-gprofit" readonly style="background:#f8f9fa"></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Schedule C Expenses -->
+  <details class="form-section">
+    <summary>Schedule C — Business Expenses</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><span class="lnum">Line 8</span><label>Advertising</label><input type="number" id="sc-adv" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 9</span><label>Car and Truck Expenses</label><input type="number" id="sc-car" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 10</span><label>Commissions and Fees</label><input type="number" id="sc-comm" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 11</span><label>Contract Labor</label><input type="number" id="sc-contract" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 13</span><label>Depreciation</label><input type="number" id="sc-dep" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 14</span><label>Employee Benefit Programs</label><input type="number" id="sc-benefits" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 15</span><label>Insurance (other than health)</label><input type="number" id="sc-ins" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 16</span><label>Interest (mortgage + other)</label><input type="number" id="sc-int" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 17</span><label>Legal and Professional</label><input type="number" id="sc-legal" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 18</span><label>Office Expense</label><input type="number" id="sc-office" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 19</span><label>Pension / Profit-Sharing Plans</label><input type="number" id="sc-pension" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 20</span><label>Rent / Lease</label><input type="number" id="sc-rent" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 21</span><label>Repairs and Maintenance</label><input type="number" id="sc-repairs" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 22</span><label>Supplies</label><input type="number" id="sc-supplies" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 23</span><label>Taxes and Licenses</label><input type="number" id="sc-taxes" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 24</span><label>Travel</label><input type="number" id="sc-travel" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 24b</span><label>Meals (enter total; 50% deductible)</label><input type="number" id="sc-meals" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 25</span><label>Utilities</label><input type="number" id="sc-util" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 26</span><label>Wages</label><input type="number" id="sc-wages" min="0" oninput="calcSC()"></div>
+        <div class="field"><span class="lnum">Line 27</span><label>Other Expenses</label><input type="number" id="sc-other" min="0" oninput="calcSC()"></div>
+      </div>
+      <hr>
+      <div class="field-grid">
+        <div class="field"><span class="lnum">Total Expenses (calc)</span><label>Total Business Expenses</label><input type="number" id="sc-totalexp" readonly style="background:#f8f9fa"></div>
+        <div class="field"><span class="lnum">Line 31</span><label>Net Profit / Loss</label><input type="number" id="sc-netprofit" readonly style="background:#f8f9fa"></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 1040 Other Income for SE -->
+  <details class="form-section">
+    <summary>Other 1040 Income &amp; Payments</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><span class="lnum">Line 1a</span><label>W-2 Wages (if any)</label><input type="number" id="sc-wages-w2" min="0" oninput="calcSC()"></div>
+        <div class="field"><label>Filing Status</label>
+          <select id="sc-status" onchange="calcSC()">
+            <option value="S">Single</option>
+            <option value="MFJ">Married Filing Jointly</option>
+            <option value="MFS">Married Filing Separately</option>
+            <option value="HOH">Head of Household</option>
+          </select>
+        </div>
+        <div class="field"><label>Number of Children Under 17</label><input type="number" id="sc-children" min="0" value="0" oninput="calcSC()"></div>
+        <div class="field"><label>Federal Tax Withheld</label><input type="number" id="sc-withheld" min="0" oninput="calcSC()"></div>
+        <div class="field"><label>Estimated Tax Payments</label><input type="number" id="sc-estpmt" min="0" oninput="calcSC()"></div>
+        <div class="field"><label>Other Adjustments / Deductions</label><input type="number" id="sc-otherAdj" min="0" oninput="calcSC()"></div>
+      </div>
+    </div>
+  </details>
+
+  <div class="result-box" id="resultSC">
+    <h3>Tax Summary — Self-Employed</h3>
+    <div id="resultSC-content"><p style="color:var(--muted);font-size:13px">Enter business income above to see your tax calculation.</p></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════ VIEW 3: FORM 1120 C-CORP ═══════════════════════ -->
+<div id="view3" class="view">
+<div class="form-container">
+  <div class="actions-bar">
+    <button class="btn btn-outline btn-sm back-btn" onclick="showView(0)">← Home</button>
+    <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print / Save PDF</button>
+  </div>
+  <h2 style="color:var(--navy);margin-bottom:14px">Form 1120 — C Corporation Income Tax Return (2025)</h2>
+
+  <details class="form-section" open>
+    <summary>Company Information</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Company Name</label><input type="text" id="c-name" placeholder="Corporation Name"></div>
+        <div class="field"><label>Tax Year End</label><input type="text" id="c-taxyear" placeholder="December 31, 2025"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section" open>
+    <summary>Income</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><span class="lnum">Line 1a</span><label>Gross Receipts / Sales</label><input type="number" id="c-receipts" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 2</span><label>Cost of Goods Sold</label><input type="number" id="c-cogs" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 3 (calc)</span><label>Gross Profit</label><input type="number" id="c-gprofit" readonly style="background:#f8f9fa"></div>
+        <div class="field"><span class="lnum">Line 4</span><label>Dividends Received</label><input type="number" id="c-divs" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 5</span><label>Interest</label><input type="number" id="c-int" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 6</span><label>Gross Rents</label><input type="number" id="c-rents" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 10</span><label>Other Income</label><input type="number" id="c-other" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 11 (calc)</span><label>Total Income</label><input type="number" id="c-totalinc" readonly style="background:#f8f9fa"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section">
+    <summary>Deductions</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><span class="lnum">Line 12</span><label>Compensation of Officers</label><input type="number" id="c-officers" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 13</span><label>Salaries and Wages</label><input type="number" id="c-salaries" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 14</span><label>Repairs and Maintenance</label><input type="number" id="c-repairs" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 15</span><label>Bad Debts</label><input type="number" id="c-baddebts" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 16</span><label>Rents</label><input type="number" id="c-rentsded" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 17</span><label>Taxes and Licenses</label><input type="number" id="c-taxes" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 18</span><label>Interest</label><input type="number" id="c-intded" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 19</span><label>Charitable Contributions (10% of TI limit)</label><input type="number" id="c-charity" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 20</span><label>Depreciation</label><input type="number" id="c-depr" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 21</span><label>Depletion</label><input type="number" id="c-depl" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 22</span><label>Advertising</label><input type="number" id="c-adv" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 23</span><label>Pension / Profit-Sharing</label><input type="number" id="c-pension" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 24</span><label>Employee Benefits</label><input type="number" id="c-empben" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 26</span><label>Other Deductions</label><input type="number" id="c-otherded" min="0" oninput="calc1120()"></div>
+        <div class="field"><span class="lnum">Line 27 (calc)</span><label>Total Deductions</label><input type="number" id="c-totalded" readonly style="background:#f8f9fa"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section">
+    <summary>Estimated Quarterly Payments</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Q1 Payment (April 15)</label><input type="number" id="c-q1" min="0" oninput="calc1120()"></div>
+        <div class="field"><label>Q2 Payment (June 15)</label><input type="number" id="c-q2" min="0" oninput="calc1120()"></div>
+        <div class="field"><label>Q3 Payment (September 15)</label><input type="number" id="c-q3" min="0" oninput="calc1120()"></div>
+        <div class="field"><label>Q4 Payment (December 15)</label><input type="number" id="c-q4" min="0" oninput="calc1120()"></div>
+      </div>
+    </div>
+  </details>
+
+  <div class="result-box" id="result1120">
+    <h3>Tax Summary — C Corporation</h3>
+    <div id="result1120-content"><p style="color:var(--muted);font-size:13px">Enter income above to calculate corporate tax.</p></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════ VIEW 4: FORM 1120-S ═══════════════════════ -->
+<div id="view4" class="view">
+<div class="form-container">
+  <div class="actions-bar">
+    <button class="btn btn-outline btn-sm back-btn" onclick="showView(0)">← Home</button>
+    <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print / Save PDF</button>
+  </div>
+  <h2 style="color:var(--navy);margin-bottom:14px">Form 1120-S — S Corporation Return (2025)</h2>
+  <div style="background:#fff8e1;border:1px solid #f59e0b;border-radius:6px;padding:10px 14px;font-size:13px;margin-bottom:14px;color:#92400e">
+    ℹ S corporations are pass-through entities. No entity-level income tax is owed. Income and deductions flow through to shareholders via Schedule K-1.
+  </div>
+
+  <details class="form-section" open>
+    <summary>Company Information</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>S Corporation Name</label><input type="text" id="s-name" placeholder="S Corp Name"></div>
+        <div class="field"><label>EIN</label><input type="text" id="s-ein" placeholder="XX-XXXXXXX"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section" open>
+    <summary>Income</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><span class="lnum">Line 1a</span><label>Gross Receipts / Sales</label><input type="number" id="s-receipts" min="0" oninput="calc1120S()"></div>
+        <div class="field"><span class="lnum">Line 2</span><label>Cost of Goods Sold</label><input type="number" id="s-cogs" min="0" oninput="calc1120S()"></div>
+        <div class="field"><span class="lnum">Line 5</span><label>Interest Income</label><input type="number" id="s-int" min="0" oninput="calc1120S()"></div>
+        <div class="field"><span class="lnum">Line 6</span><label>Dividends</label><input type="number" id="s-divs" min="0" oninput="calc1120S()"></div>
+        <div class="field"><span class="lnum">Line 7</span><label>Rents</label><input type="number" id="s-rents" min="0" oninput="calc1120S()"></div>
+        <div class="field"><span class="lnum">Line 10</span><label>Other Income</label><input type="number" id="s-other" min="0" oninput="calc1120S()"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section">
+    <summary>Deductions</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Officer Compensation</label><input type="number" id="s-officers" min="0" oninput="calc1120S()"></div>
+        <div class="field"><label>Salaries and Wages</label><input type="number" id="s-salaries" min="0" oninput="calc1120S()"></div>
+        <div class="field"><label>Repairs and Maintenance</label><input type="number" id="s-repairs" min="0" oninput="calc1120S()"></div>
+        <div class="field"><label>Rents</label><input type="number" id="s-rentsded" min="0" oninput="calc1120S()"></div>
+        <div class="field"><label>Taxes and Licenses</label><input type="number" id="s-taxes" min="0" oninput="calc1120S()"></div>
+        <div class="field"><label>Interest</label><input type="number" id="s-intded" min="0" oninput="calc1120S()"></div>
+        <div class="field"><label>Depreciation</label><input type="number" id="s-depr" min="0" oninput="calc1120S()"></div>
+        <div class="field"><label>Advertising</label><input type="number" id="s-adv" min="0" oninput="calc1120S()"></div>
+        <div class="field"><label>Employee Benefits</label><input type="number" id="s-empben" min="0" oninput="calc1120S()"></div>
+        <div class="field"><label>Pension / Profit-Sharing</label><input type="number" id="s-pension" min="0" oninput="calc1120S()"></div>
+        <div class="field field-full"><label>Other Deductions</label><input type="number" id="s-otherded" min="0" oninput="calc1120S()"></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- K-1 Shareholders -->
+  <details class="form-section" open>
+    <summary>Schedule K-1 — Shareholder Allocations</summary>
+    <div class="section-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Add shareholders. Ownership percentages should total 100%.</p>
+      <table class="k1-table" id="s-k1-table">
+        <thead>
+          <tr>
+            <th>Shareholder Name</th>
+            <th>Ownership %</th>
+            <th>Share of Ordinary Income</th>
+            <th>Share of Deductions</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="s-k1-body"></tbody>
+      </table>
+      <button class="btn btn-outline btn-sm k1-add-btn" onclick="addShareholder()">+ Add Shareholder</button>
+    </div>
+  </details>
+
+  <div class="result-box" id="result1120S">
+    <h3>Pass-Through Summary — S Corporation</h3>
+    <div id="result1120S-content"><p style="color:var(--muted);font-size:13px">Enter income and add shareholders to see K-1 allocations.</p></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════ VIEW 5: FORM 1065 ═══════════════════════ -->
+<div id="view5" class="view">
+<div class="form-container">
+  <div class="actions-bar">
+    <button class="btn btn-outline btn-sm back-btn" onclick="showView(0)">← Home</button>
+    <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print / Save PDF</button>
+  </div>
+  <h2 style="color:var(--navy);margin-bottom:14px">Form 1065 — Partnership / LLC Return (2025)</h2>
+  <div style="background:#fff8e1;border:1px solid #f59e0b;border-radius:6px;padding:10px 14px;font-size:13px;margin-bottom:14px;color:#92400e">
+    ℹ Partnerships are pass-through entities. No entity-level income tax. Income, deductions, and credits flow to partners via Schedule K-1.
+  </div>
+
+  <details class="form-section" open>
+    <summary>Partnership Information</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Partnership / LLC Name</label><input type="text" id="p-name" placeholder="Partnership Name"></div>
+        <div class="field"><label>EIN</label><input type="text" id="p-ein" placeholder="XX-XXXXXXX"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section" open>
+    <summary>Income</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><span class="lnum">Line 1a</span><label>Gross Receipts / Sales</label><input type="number" id="p-receipts" min="0" oninput="calc1065()"></div>
+        <div class="field"><span class="lnum">Line 2</span><label>Cost of Goods Sold</label><input type="number" id="p-cogs" min="0" oninput="calc1065()"></div>
+        <div class="field"><span class="lnum">Line 5</span><label>Interest Income</label><input type="number" id="p-int" min="0" oninput="calc1065()"></div>
+        <div class="field"><span class="lnum">Line 6</span><label>Dividends</label><input type="number" id="p-divs" min="0" oninput="calc1065()"></div>
+        <div class="field"><span class="lnum">Line 7</span><label>Rents</label><input type="number" id="p-rents" min="0" oninput="calc1065()"></div>
+        <div class="field"><span class="lnum">Line 10</span><label>Other Income</label><input type="number" id="p-other" min="0" oninput="calc1065()"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section">
+    <summary>Deductions</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Salaries and Wages</label><input type="number" id="p-salaries" min="0" oninput="calc1065()"></div>
+        <div class="field"><label>Guaranteed Payments to Partners</label><input type="number" id="p-gp" min="0" oninput="calc1065()"></div>
+        <div class="field"><label>Repairs and Maintenance</label><input type="number" id="p-repairs" min="0" oninput="calc1065()"></div>
+        <div class="field"><label>Rents</label><input type="number" id="p-rentsded" min="0" oninput="calc1065()"></div>
+        <div class="field"><label>Taxes and Licenses</label><input type="number" id="p-taxes" min="0" oninput="calc1065()"></div>
+        <div class="field"><label>Interest</label><input type="number" id="p-intded" min="0" oninput="calc1065()"></div>
+        <div class="field"><label>Depreciation</label><input type="number" id="p-depr" min="0" oninput="calc1065()"></div>
+        <div class="field"><label>Employee Benefits</label><input type="number" id="p-empben" min="0" oninput="calc1065()"></div>
+        <div class="field field-full"><label>Other Deductions</label><input type="number" id="p-otherded" min="0" oninput="calc1065()"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section" open>
+    <summary>Schedule K-1 — Partner Allocations</summary>
+    <div class="section-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Add partners. Ownership percentages should total 100%. General partners owe SE tax on their distributive share.</p>
+      <table class="k1-table" id="p-k1-table">
+        <thead>
+          <tr>
+            <th>Partner Name</th>
+            <th>Type</th>
+            <th>Ownership %</th>
+            <th>Distributive Share</th>
+            <th>Guaranteed Payments</th>
+            <th>SE Income</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="p-k1-body"></tbody>
+      </table>
+      <button class="btn btn-outline btn-sm k1-add-btn" onclick="addPartner()">+ Add Partner</button>
+    </div>
+  </details>
+
+  <div class="result-box" id="result1065">
+    <h3>Pass-Through Summary — Partnership / LLC</h3>
+    <div id="result1065-content"><p style="color:var(--muted);font-size:13px">Enter income and add partners to see K-1 allocations.</p></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════ VIEW 6: FORM 1041 ═══════════════════════ -->
+<div id="view6" class="view">
+<div class="form-container">
+  <div class="actions-bar">
+    <button class="btn btn-outline btn-sm back-btn" onclick="showView(0)">← Home</button>
+    <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print / Save PDF</button>
+  </div>
+  <h2 style="color:var(--navy);margin-bottom:14px">Form 1041 — Estate &amp; Trust Income Tax Return (2025)</h2>
+
+  <details class="form-section" open>
+    <summary>Entity Information</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Trust / Estate Name</label><input type="text" id="t-name" placeholder="Name of Trust or Estate"></div>
+        <div class="field"><label>EIN</label><input type="text" id="t-ein" placeholder="XX-XXXXXXX"></div>
+        <div class="field"><label>Entity Type</label>
+          <select id="t-type" onchange="calc1041()">
+            <option value="estate">Estate ($600 exemption)</option>
+            <option value="simple">Simple Trust ($300 exemption)</option>
+            <option value="complex">Complex Trust ($100 exemption)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section" open>
+    <summary>Income</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Interest Income</label><input type="number" id="t-int" min="0" oninput="calc1041()"></div>
+        <div class="field"><label>Dividends</label><input type="number" id="t-divs" min="0" oninput="calc1041()"></div>
+        <div class="field"><label>Business Income</label><input type="number" id="t-biz" min="0" oninput="calc1041()"></div>
+        <div class="field"><label>Capital Gains</label><input type="number" id="t-capgains" min="0" oninput="calc1041()"></div>
+        <div class="field"><label>Rents</label><input type="number" id="t-rents" min="0" oninput="calc1041()"></div>
+        <div class="field"><label>Other Income</label><input type="number" id="t-other" min="0" oninput="calc1041()"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section">
+    <summary>Deductions</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Interest Paid</label><input type="number" id="t-intded" min="0" oninput="calc1041()"></div>
+        <div class="field"><label>Taxes</label><input type="number" id="t-taxes" min="0" oninput="calc1041()"></div>
+        <div class="field"><label>Trustee / Executor Fees</label><input type="number" id="t-fees" min="0" oninput="calc1041()"></div>
+        <div class="field"><label>Attorney / CPA / Accounting Fees</label><input type="number" id="t-legal" min="0" oninput="calc1041()"></div>
+        <div class="field"><label>Charitable Deduction</label><input type="number" id="t-charity" min="0" oninput="calc1041()"></div>
+        <div class="field"><label>Depreciation</label><input type="number" id="t-depr" min="0" oninput="calc1041()"></div>
+        <div class="field field-full"><label>Other Deductions</label><input type="number" id="t-otherded" min="0" oninput="calc1041()"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section">
+    <summary>Income Distribution &amp; Exemption</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Income Distribution Deduction (amounts distributed to beneficiaries)</label><input type="number" id="t-distrib" min="0" oninput="calc1041()"></div>
+        <div class="field"><label>Exemption (auto-filled by entity type)</label><input type="number" id="t-exemption" readonly style="background:#f8f9fa"></div>
+      </div>
+    </div>
+  </details>
+
+  <div class="result-box" id="result1041">
+    <h3>Tax Summary — Estate &amp; Trust</h3>
+    <div id="result1041-content"><p style="color:var(--muted);font-size:13px">Enter income above to calculate trust/estate tax.</p></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════ VIEW 7: FORM 990 / 990-T ═══════════════════════ -->
+<div id="view7" class="view">
+<div class="form-container">
+  <div class="actions-bar">
+    <button class="btn btn-outline btn-sm back-btn" onclick="showView(0)">← Home</button>
+    <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print / Save PDF</button>
+  </div>
+  <h2 style="color:var(--navy);margin-bottom:14px">Form 990 / 990-T — Nonprofit Organization (2025)</h2>
+  <div style="background:#e8f5e9;border:1px solid #66bb6a;border-radius:6px;padding:10px 14px;font-size:13px;margin-bottom:14px;color:#1b5e20">
+    ℹ The Form 990 itself is an informational return — no tax is owed on exempt activities. Tax is owed only on unrelated business income (UBI) via Form 990-T at 21%.
+  </div>
+
+  <details class="form-section" open>
+    <summary>Organization Information</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Organization Name</label><input type="text" id="np-name" placeholder="Nonprofit Name"></div>
+        <div class="field"><label>EIN</label><input type="text" id="np-ein" placeholder="XX-XXXXXXX"></div>
+        <div class="field"><label>Tax Year End</label><input type="text" id="np-taxyear" placeholder="December 31, 2025"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section" open>
+    <summary>Form 990 — Part I Summary (Informational)</summary>
+    <div class="section-body">
+      <table class="two-col-table">
+        <thead><tr><th style="text-align:left">Line</th><th>Prior Year</th><th>Current Year</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Line 1</strong> Contributions and Grants</td><td><input type="number" id="np-contrib-py" min="0" oninput="calc990()"></td><td><input type="number" id="np-contrib-cy" min="0" oninput="calc990()"></td></tr>
+          <tr><td><strong>Line 2</strong> Program Service Revenue</td><td><input type="number" id="np-prog-py" min="0" oninput="calc990()"></td><td><input type="number" id="np-prog-cy" min="0" oninput="calc990()"></td></tr>
+          <tr><td><strong>Line 3</strong> Investment Income</td><td><input type="number" id="np-invest-py" min="0" oninput="calc990()"></td><td><input type="number" id="np-invest-cy" min="0" oninput="calc990()"></td></tr>
+          <tr><td><strong>Line 4</strong> Other Revenue</td><td><input type="number" id="np-otherrev-py" min="0" oninput="calc990()"></td><td><input type="number" id="np-otherrev-cy" min="0" oninput="calc990()"></td></tr>
+          <tr style="background:#f8f9fa"><td><strong>Line 12</strong> Total Revenue</td><td><input type="number" id="np-totalrev-py" readonly style="background:#eff2f5"></td><td><input type="number" id="np-totalrev-cy" readonly style="background:#eff2f5"></td></tr>
+          <tr><td><strong>Line 13</strong> Grants and Assistance</td><td><input type="number" id="np-grants-py" min="0" oninput="calc990()"></td><td><input type="number" id="np-grants-cy" min="0" oninput="calc990()"></td></tr>
+          <tr><td><strong>Line 14</strong> Benefits Paid to Members</td><td><input type="number" id="np-membben-py" min="0" oninput="calc990()"></td><td><input type="number" id="np-membben-cy" min="0" oninput="calc990()"></td></tr>
+          <tr><td><strong>Line 15</strong> Compensation of Officers &amp; Employees</td><td><input type="number" id="np-comp-py" min="0" oninput="calc990()"></td><td><input type="number" id="np-comp-cy" min="0" oninput="calc990()"></td></tr>
+          <tr><td><strong>Line 16</strong> Professional Fees &amp; Other</td><td><input type="number" id="np-profees-py" min="0" oninput="calc990()"></td><td><input type="number" id="np-profees-cy" min="0" oninput="calc990()"></td></tr>
+          <tr><td><strong>Line 17</strong> Other Expenses</td><td><input type="number" id="np-otherexp-py" min="0" oninput="calc990()"></td><td><input type="number" id="np-otherexp-cy" min="0" oninput="calc990()"></td></tr>
+          <tr style="background:#f8f9fa"><td><strong>Line 18</strong> Total Expenses</td><td><input type="number" id="np-totalexp-py" readonly style="background:#eff2f5"></td><td><input type="number" id="np-totalexp-cy" readonly style="background:#eff2f5"></td></tr>
+          <tr style="background:#f8f9fa"><td><strong>Line 19</strong> Revenue Minus Expenses</td><td><input type="number" id="np-surplus-py" readonly style="background:#eff2f5"></td><td><input type="number" id="np-surplus-cy" readonly style="background:#eff2f5"></td></tr>
+        </tbody>
+      </table>
+      <hr>
+      <div class="field-grid" style="margin-top:12px">
+        <div class="field"><label>Net Assets — Beginning of Year</label><input type="number" id="np-assets-begin" min="0" oninput="calc990()"></div>
+        <div class="field"><label>Net Assets — End of Year (calc)</label><input type="number" id="np-assets-end" readonly style="background:#f8f9fa"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="form-section" open>
+    <summary>Form 990-T — Unrelated Business Income (Taxable)</summary>
+    <div class="section-body">
+      <div class="field-grid">
+        <div class="field"><label>Gross Income from Unrelated Business Activities</label><input type="number" id="np-ubi-gross" min="0" oninput="calc990()"></div>
+        <div class="field"><label>Specific Deductions Directly Connected to UBI</label><input type="number" id="np-ubi-ded" min="0" oninput="calc990()"></div>
+        <div class="field"><label>Net Operating Loss Deduction</label><input type="number" id="np-ubi-nol" min="0" oninput="calc990()"></div>
+        <div class="field"><label>UBI Tax Payments Made (Estimated)</label><input type="number" id="np-ubi-pmts" min="0" oninput="calc990()"></div>
+      </div>
+    </div>
+  </details>
+
+  <div class="result-box" id="result990">
+    <h3>Form 990-T Tax Summary</h3>
+    <div id="result990-content"><p style="color:var(--muted);font-size:13px">Enter UBI data above to calculate unrelated business income tax.</p></div>
+  </div>
+</div>
+</div>
+
 <script>
-(function(){
-  var mode="home";        // "home" | "individual" | "business"
-  var entityType=null;    // for business mode
-  var STEPS=["About you","Income","Deductions","Payments","Review"];
-  var step=0;
-  var f={
-    firstName:"",lastName:"",filingStatus:"single",taxpayerAge65OrOlder:false,
-    numChildrenCTC:0,numOtherDependents:0,
-    wages:"",taxableInterest:"",ordinaryDividends:"",qualifiedDividends:"",
-    netLongTermCapitalGains:"",netShortTermCapitalGains:"",retirementDistributions:"",
-    socialSecurityBenefits:"",selfEmploymentNetProfit:"",
-    qualifiedBusinessIncome:"",qualifiedTips:"",qualifiedOvertime:"",
-    tuition:"",retirementContributions:"",
-    deductionMethod:"auto",stateAndLocalTaxes:"",mortgageInterest:"",charitableContributions:"",
-    federalWithholding:"",estimatedPayments:""
+// ═══════════════════ UTILITIES ═══════════════════
+const fmt = (n) => new Intl.NumberFormat('en-US', {style:'currency', currency:'USD', minimumFractionDigits:2}).format(n);
+const n = (id) => { const el = document.getElementById(id); if (!el) return 0; const v = parseFloat(el.value); return isNaN(v) ? 0 : v; };
+const max0 = (x) => Math.max(0, x);
+
+function showView(idx) {
+  for (let i = 0; i <= 7; i++) {
+    const el = document.getElementById('view' + i);
+    if (el) el.classList.remove('active');
+  }
+  const v = document.getElementById('view' + idx);
+  if (v) v.classList.add('active');
+  const bc = document.getElementById('breadcrumb');
+  const bct = document.getElementById('bc-title');
+  if (idx === 0) {
+    bc.style.display = 'none';
+  } else {
+    bc.style.display = 'block';
+    const titles = ['','Form 1040 — Individual','Schedule C + 1040 — Self-Employed','Form 1120 — C Corporation','Form 1120-S — S Corporation','Form 1065 — Partnership / LLC','Form 1041 — Estate & Trust','Form 990 / 990-T — Nonprofit'];
+    bct.textContent = titles[idx] || '';
+  }
+  window.scrollTo(0, 0);
+}
+
+// ═══════════════════ FILING STATUS (View 1) ═══════════════════
+let currentStatus = 'S';
+function setStatus(s) {
+  currentStatus = s;
+  ['S','MFJ','MFS','HOH'].forEach(x => {
+    const btn = document.getElementById('fs-' + x);
+    if (btn) btn.classList.toggle('active', x === s);
+  });
+  updateStdDedDisplay();
+  calc1040();
+}
+
+function getStdDed(status) {
+  return {S:15000, MFJ:30000, MFS:15000, HOH:22500}[status] || 15000;
+}
+
+function updateStdDedDisplay() {
+  const el = document.getElementById('std-ded-display');
+  if (el) el.textContent = 'Standard Deduction (' + currentStatus + '): ' + fmt(getStdDed(currentStatus));
+}
+
+function toggleItemized() {
+  const isItemized = document.querySelector('input[name="dedType"]:checked')?.value === 'itemized';
+  const sec = document.getElementById('itemized-section');
+  if (sec) sec.style.display = isItemized ? 'block' : 'none';
+  calc1040();
+}
+
+// 2025 Brackets
+const BRACKETS = {
+  S: [[11925,0.10],[48475,0.12],[103350,0.22],[197300,0.24],[250525,0.32],[626350,0.35],[Infinity,0.37]],
+  MFJ:[[23850,0.10],[96950,0.12],[206700,0.22],[394600,0.24],[501050,0.32],[751600,0.35],[Infinity,0.37]],
+  MFS:[[11925,0.10],[48475,0.12],[103350,0.22],[197300,0.24],[250525,0.32],[626350,0.35],[Infinity,0.37]],
+  HOH:[[17000,0.10],[64850,0.12],[103350,0.22],[197300,0.24],[250500,0.32],[626350,0.35],[Infinity,0.37]],
+};
+
+function calcBracketTax(income, status) {
+  const brackets = BRACKETS[status] || BRACKETS.S;
+  let tax = 0, prev = 0;
+  const detail = [];
+  for (const [top, rate] of brackets) {
+    if (income <= 0) break;
+    const taxable = Math.min(income, top - prev);
+    const t = taxable * rate;
+    if (taxable > 0) detail.push({rate, from:prev, to:Math.min(income+prev, top), taxable, tax:t});
+    tax += t;
+    income -= taxable;
+    prev = top;
+    if (top === Infinity) break;
+  }
+  return {tax, detail};
+}
+
+// LTCG thresholds 2025
+function ltcgRate(income, status) {
+  const thresholds = {
+    S: {z:47025, f:518900},
+    MFJ:{z:94050, f:583750},
+    MFS:{z:47025, f:291850},
+    HOH:{z:63000, f:551350},
   };
-  var el=function(id){return document.getElementById(id);};
-  var n=function(s){s=(""+s).trim();return s===""?undefined:Number(s);};
-  var usd=function(v,d){return (v||0).toLocaleString("en-US",{style:"currency",currency:"USD",maximumFractionDigits:(d==null?0:d)});};
+  const t = thresholds[status] || thresholds.S;
+  if (income <= t.z) return 0;
+  if (income <= t.f) return 0.15;
+  return 0.20;
+}
 
-  function toInput(){
-    var deps=[];
-    for(var i=0;i<f.numChildrenCTC;i++)deps.push({qualifiesForCTC:true,qualifiesForODC:false});
-    for(var j=0;j<f.numOtherDependents;j++)deps.push({qualifiesForCTC:false,qualifiesForODC:true});
-    return {
-      filingStatus:f.filingStatus,taxpayerAge65OrOlder:f.taxpayerAge65OrOlder,dependents:deps,
-      wages:n(f.wages),taxableInterest:n(f.taxableInterest),ordinaryDividends:n(f.ordinaryDividends),
-      qualifiedDividends:n(f.qualifiedDividends),netLongTermCapitalGains:n(f.netLongTermCapitalGains),
-      netShortTermCapitalGains:n(f.netShortTermCapitalGains),
-      retirementDistributions:n(f.retirementDistributions),selfEmploymentNetProfit:n(f.selfEmploymentNetProfit),
-      socialSecurityBenefits:n(f.socialSecurityBenefits),
-      qualifiedBusinessIncome:n(f.qualifiedBusinessIncome),qualifiedTips:n(f.qualifiedTips),
-      qualifiedOvertime:n(f.qualifiedOvertime),
-      aotcExpenses:n(f.tuition),aotcStudents:(n(f.tuition)?1:undefined),
-      retirementContributions:n(f.retirementContributions),
-      deductionMethod:f.deductionMethod==="auto"?undefined:f.deductionMethod,
-      itemized:{stateAndLocalTaxes:n(f.stateAndLocalTaxes),mortgageInterest:n(f.mortgageInterest),charitableContributions:n(f.charitableContributions)},
-      federalWithholding:n(f.federalWithholding),estimatedPayments:n(f.estimatedPayments)
-    };
+// SS taxable portion
+function calcSSTaxable(ss, agi, status) {
+  const lowThresh = status === 'MFJ' ? 32000 : 25000;
+  const highThresh = status === 'MFJ' ? 44000 : 34000;
+  const provisional = agi - ss * 0.85 + ss; // approx: agi already excludes SS; provisional = AGI + 0.5*SS
+  // Actually: provisional income = AGI (excluding SS) + 0.5*SS + tax-exempt interest
+  // We approximate AGI includes everything except SS, so provisional = (agi - current SS included) + ss*0.5
+  // Simple approach: treat agi as not including any SS, then add 50% SS
+  const prov = agi + ss * 0.5;
+  if (prov <= lowThresh) return 0;
+  if (prov <= highThresh) return Math.min(ss * 0.5, (prov - lowThresh) * 0.5);
+  return Math.min(ss * 0.85, 0.85 * (prov - highThresh) + Math.min(ss * 0.5, (highThresh - lowThresh) * 0.5));
+}
+
+// Student loan phaseout
+function calcStuLoan(raw, agi, status) {
+  const max = Math.min(raw, 2500);
+  const lo = status === 'MFJ' ? 155000 : 75000;
+  const hi = status === 'MFJ' ? 185000 : 90000;
+  if (agi <= lo) return max;
+  if (agi >= hi) return 0;
+  return max * (1 - (agi - lo) / (hi - lo));
+}
+
+// CTC phaseout
+function calcCTC(numChildren, agi, status) {
+  const threshold = status === 'MFJ' ? 400000 : 200000;
+  const phaseout = Math.floor(max0(agi - threshold) / 1000) * 50;
+  return max0(numChildren * 2000 - phaseout);
+}
+
+// AMT 2025
+function calcAMT(regularTax, amti, status) {
+  const exemption = status === 'MFJ' ? 133300 : 85700;
+  const phaseoutStart = status === 'MFJ' ? 1271900 : 635950;
+  const eff_exemption = max0(exemption - max0(amti - phaseoutStart) * 0.25);
+  const amtBase = max0(amti - eff_exemption);
+  let amt = 0;
+  if (amtBase <= 220700) {
+    amt = amtBase * 0.26;
+  } else {
+    amt = 220700 * 0.26 + (amtBase - 220700) * 0.28;
+  }
+  return max0(amt - regularTax);
+}
+
+function calc1040() {
+  const status = currentStatus;
+  // Income
+  const wages = n('wages');
+  const interest = n('interest');
+  const qualDiv = n('qualDiv');
+  const ordDiv = max0(n('ordDiv'));
+  const iradist = n('iraDistrib');
+  const ss = n('ssBenefits');
+  const stcg = n('stcg');
+  const ltcg = n('ltcg');
+  const otherInc = n('otherIncome');
+
+  // Provisional SS computation (before SS is added to gross)
+  const grossExcSS = wages + interest + ordDiv + iradist + stcg + ltcg + otherInc;
+  const ssTaxable = calcSSTaxable(ss, grossExcSS, status);
+  const grossIncome = grossExcSS + ssTaxable;
+
+  // Above-the-line adjustments
+  const stuLoanRaw = n('stuLoan');
+  const iraDeduct = n('iraDeduct');
+  const hsa = n('hsa');
+  const seDeduct = n('seDeduct');
+  const otherAdj = n('otherAdj');
+  const stuLoan = calcStuLoan(stuLoanRaw, grossIncome, status);
+  const totalAdj = stuLoan + iraDeduct + hsa + seDeduct + otherAdj;
+  const agi = max0(grossIncome - totalAdj);
+
+  // Deductions
+  const dedType = document.querySelector('input[name="dedType"]:checked')?.value || 'standard';
+  const stdDed = getStdDed(status);
+  let itemized = 0;
+  if (dedType === 'itemized') {
+    const mortgageInt = n('mortgageInt');
+    const salt = Math.min(n('salt'), 10000);
+    const charitable = n('charitable');
+    const medTotal = n('medical');
+    const medAllowed = max0(medTotal - agi * 0.075);
+    const otherItem = n('otherItemized');
+    itemized = mortgageInt + salt + charitable + medAllowed + otherItem;
+    const itEl = document.getElementById('itemized-total');
+    if (itEl) itEl.innerHTML = '<strong>Total Itemized: ' + fmt(itemized) + '</strong>' + (itemized < stdDed ? ' (Standard deduction of ' + fmt(stdDed) + ' is larger — consider switching)' : '');
+  }
+  const deduction = dedType === 'itemized' ? Math.max(itemized, 0) : stdDed;
+  let taxableIncome = max0(agi - deduction);
+
+  // LTCG preferred tax
+  const ltcgAndQD = max0(ltcg) + qualDiv;
+  const ordinaryIncome = max0(taxableIncome - ltcgAndQD);
+  const {tax: ordTax, detail: bracketDetail} = calcBracketTax(ordinaryIncome, status);
+
+  // LTCG tax (stacked on top of ordinary income)
+  let ltcgTax = 0;
+  if (ltcgAndQD > 0) {
+    const incomeBeforeLTCG = ordinaryIncome;
+    const thresholds = {S:{z:47025,f:518900},MFJ:{z:94050,f:583750},MFS:{z:47025,f:291850},HOH:{z:63000,f:551350}};
+    const t = thresholds[status] || thresholds.S;
+    const zeroAmt = max0(Math.min(ltcgAndQD, max0(t.z - incomeBeforeLTCG)));
+    const fifteenAmt = max0(Math.min(ltcgAndQD - zeroAmt, max0(t.f - Math.max(incomeBeforeLTCG, t.z))));
+    const twentyAmt = max0(ltcgAndQD - zeroAmt - fifteenAmt);
+    ltcgTax = fifteenAmt * 0.15 + twentyAmt * 0.20;
   }
 
-  function field(label,key,opts){
-    opts=opts||{};
-    var type=opts.type||"number";
-    return '<div class="field"><label>'+label+'</label>'+
-      '<input data-key="'+key+'" type="'+type+'" '+(type==="number"?'min="0" inputmode="decimal" placeholder="0"':'')+' value="'+(f[key]!=null?String(f[key]).replace(/"/g,"&quot;"):"")+'"></div>';
-  }
+  const regularTax = ordTax + ltcgTax;
 
-  function renderSteps(){
-    el("steps").innerHTML=STEPS.map(function(s,i){
-      var cls=i===step?"active":i<step?"done":"";
-      return '<span class="pill '+cls+'" data-step="'+i+'">'+(i+1)+". "+s+"</span>";
-    }).join("");
-    Array.prototype.forEach.call(el("steps").querySelectorAll(".pill"),function(p){
-      p.onclick=function(){step=Number(p.getAttribute("data-step"));render();};
-    });
-  }
+  // STCG already included in ordinary income (STCG taxed as ordinary)
 
-  function panelHtml(){
-    if(step===0){
-      return '<h2>About you</h2>'+
-        '<div class="row">'+field("First name","firstName",{type:"text"})+field("Last name","lastName",{type:"text"})+'</div>'+
-        '<div class="field"><label>Filing status</label><select data-key="filingStatus">'+
-        ['single|Single','married_jointly|Married filing jointly','married_separately|Married filing separately','head_of_household|Head of household','qualifying_surviving_spouse|Qualifying surviving spouse']
-          .map(function(o){var p=o.split("|");return '<option value="'+p[0]+'"'+(f.filingStatus===p[0]?" selected":"")+'>'+p[1]+'</option>';}).join("")+
-        '</select></div>'+
-        '<label class="chk"><input type="checkbox" data-key="taxpayerAge65OrOlder"'+(f.taxpayerAge65OrOlder?" checked":"")+'> I am 65 or older (unlocks the 2025 senior deduction)</label>'+
-        '<div class="row">'+field('Children (Child Tax Credit) <span class="hint">under 17</span>',"numChildrenCTC")+field('Other dependents <span class="hint">$500 each</span>',"numOtherDependents")+'</div>';
+  // Credits
+  const numChildren = n('numChildren');
+  const ctc = calcCTC(numChildren, agi, status);
+  const actc = Math.min(numChildren * 1700, ctc); // ACTC refundable portion
+  const depCareCredit = Math.min(n('depCare') * 0.20, 1050); // simplified: 20% of up to $3k/1 child
+  const eduCredit = n('eduCredit');
+  const otherCredits = n('otherCredits');
+  const totalCredits = ctc + depCareCredit + eduCredit + otherCredits;
+
+  // AMT
+  const amtPref = n('amtPref');
+  const amtAddback = n('amtAddback');
+  const amti = taxableIncome + amtPref + amtAddback;
+  const amt = calcAMT(regularTax, amti, status);
+
+  // SE Tax (if SE income in this view — usually from seDeduct field)
+  // SE tax here is mainly driven by the seDeduct field presence
+  const seTax = 0; // In View 1 pure 1040, SE tax auto-calculated from seDeduct
+
+  const totalTax = max0(regularTax - totalCredits) + amt + seTax;
+
+  // Payments
+  const withheld = n('withheld');
+  const estPmts = n('estPmts');
+  const otherPmts = n('otherPmts');
+  const totalPmts = withheld + estPmts + otherPmts + actc;
+
+  const balance = totalTax - totalPmts;
+
+  // Render
+  const el = document.getElementById('result1040-content');
+  if (!el) return;
+
+  const bracketRows = bracketDetail.map(b =>
+    '<tr><td>' + (b.rate*100) + '%</td><td>' + fmt(b.from) + ' – ' + fmt(b.to) + '</td><td>' + fmt(b.taxable) + '</td><td>' + fmt(b.tax) + '</td></tr>'
+  ).join('');
+
+  el.innerHTML = `
+    <div class="result-line"><span>Gross Income</span><span class="val">${fmt(grossIncome)}</span></div>
+    <div class="result-line"><span>Adjustments to Income</span><span class="val">(${fmt(totalAdj)})</span></div>
+    <div class="result-line"><span>Adjusted Gross Income (AGI)</span><span class="val">${fmt(agi)}</span></div>
+    <div class="result-line"><span>${dedType === 'standard' ? 'Standard' : 'Itemized'} Deduction</span><span class="val">(${fmt(deduction)})</span></div>
+    <div class="result-line"><span>Taxable Income</span><span class="val">${fmt(taxableIncome)}</span></div>
+    <hr>
+    <p style="font-size:12px;color:var(--muted);margin:6px 0 4px">Tax Bracket Breakdown (Ordinary Income)</p>
+    <table class="bracket-table"><thead><tr><th>Rate</th><th>Range</th><th>Taxable Amount</th><th>Tax</th></tr></thead><tbody>${bracketRows || '<tr><td colspan=4 style="color:var(--muted)">No ordinary income</td></tr>'}</tbody></table>
+    <div class="result-line" style="margin-top:8px"><span>Ordinary Income Tax</span><span class="val">${fmt(ordTax)}</span></div>
+    ${ltcgTax > 0 ? `<div class="result-line"><span>LTCG / Qualified Dividends Tax</span><span class="val">${fmt(ltcgTax)}</span></div>` : ''}
+    <div class="result-line"><span>Regular Tax Before Credits</span><span class="val">${fmt(regularTax)}</span></div>
+    ${amt > 0 ? `<div class="result-line"><span>Alternative Minimum Tax (AMT)</span><span class="val">${fmt(amt)}</span></div>` : ''}
+    <div class="result-line"><span>Child Tax Credit</span><span class="val">(${fmt(ctc)})</span></div>
+    ${depCareCredit > 0 ? `<div class="result-line"><span>Child &amp; Dependent Care Credit</span><span class="val">(${fmt(depCareCredit)})</span></div>` : ''}
+    ${eduCredit > 0 ? `<div class="result-line"><span>Education Credits</span><span class="val">(${fmt(eduCredit)})</span></div>` : ''}
+    ${otherCredits > 0 ? `<div class="result-line"><span>Other Credits</span><span class="val">(${fmt(otherCredits)})</span></div>` : ''}
+    <div class="result-line"><span>Total Tax Liability</span><span class="val">${fmt(totalTax)}</span></div>
+    <hr>
+    <div class="result-line"><span>Federal Tax Withheld</span><span class="val">(${fmt(withheld)})</span></div>
+    <div class="result-line"><span>Estimated Payments</span><span class="val">(${fmt(estPmts)})</span></div>
+    ${actc > 0 ? `<div class="result-line"><span>Additional Child Tax Credit (refundable)</span><span class="val">(${fmt(actc)})</span></div>` : ''}
+    ${otherPmts > 0 ? `<div class="result-line"><span>Other Payments</span><span class="val">(${fmt(otherPmts)})</span></div>` : ''}
+    <div class="result-line"><span>Total Payments</span><span class="val">(${fmt(totalPmts)})</span></div>
+    <div class="${balance >= 0 ? 'amount-big owed' : 'amount-big refund'}">${fmt(Math.abs(balance))}</div>
+    <div class="amount-label">${balance >= 0 ? 'Amount Owed' : 'Refund'}</div>
+    <div class="result-line total ${balance >= 0 ? 'owed' : 'refund'}">
+      <span>${balance >= 0 ? 'TAX OWED' : 'REFUND DUE'}</span>
+      <span class="val">${balance >= 0 ? fmt(balance) : fmt(-balance)}</span>
+    </div>
+    ${ssTaxable !== ss && ss > 0 ? `<p style="font-size:12px;color:var(--muted);margin-top:8px">Note: ${fmt(ssTaxable)} of your ${fmt(ss)} Social Security benefit is taxable (${Math.round(ssTaxable/ss*100)}%).</p>` : ''}
+  `;
+}
+
+// ═══════════════════ VIEW 2: SCHEDULE C ═══════════════════
+function calcSC() {
+  const gross = n('sc-gross');
+  const returns = n('sc-returns');
+  const cogs = n('sc-cogs');
+  const gprofit = max0(gross - returns - cogs);
+  const el_gp = document.getElementById('sc-gprofit');
+  if (el_gp) el_gp.value = gprofit.toFixed(2);
+
+  const expenses = ['sc-adv','sc-car','sc-comm','sc-contract','sc-dep','sc-benefits','sc-ins','sc-int','sc-legal','sc-office','sc-pension','sc-rent','sc-repairs','sc-supplies','sc-taxes','sc-travel','sc-util','sc-wages','sc-other']
+    .reduce((sum, id) => sum + n(id), 0) + n('sc-meals') * 0.5;
+  const el_te = document.getElementById('sc-totalexp');
+  if (el_te) el_te.value = expenses.toFixed(2);
+  const netProfit = gprofit - expenses;
+  const el_np = document.getElementById('sc-netprofit');
+  if (el_np) el_np.value = netProfit.toFixed(2);
+
+  const status = document.getElementById('sc-status')?.value || 'S';
+  const w2wages = n('sc-wages-w2');
+  const numChildren = n('sc-children');
+  const withheld = n('sc-withheld');
+  const estPmts = n('sc-estpmt');
+  const otherAdj = n('sc-otherAdj');
+
+  // SE Tax: 15.3% on 92.35% of net SE (SS capped at $176,100 wage base)
+  let seTax = 0, ssWages = 0, mcWages = 0, addMC = 0;
+  if (netProfit > 0) {
+    const seBase = netProfit * 0.9235;
+    const ssBasis = Math.min(seBase, 176100);
+    ssWages = ssBasis * 0.124;
+    mcWages = seBase * 0.029;
+    const totalWages = w2wages + netProfit;
+    addMC = max0(totalWages - 200000) * 0.009;
+    seTax = ssWages + mcWages + addMC;
+  }
+  const seDeductAmt = seTax / 2; // deductible half of SE tax
+
+  // QBI deduction: 20% of net profit (simplified, below threshold)
+  const qbi = (status === 'MFJ' ? 394600 : 197300);
+  const w2WageOk = w2wages; // simplified
+
+  // Build 1040 equivalent
+  const grossIncome = w2wages + max0(netProfit); // wages + SE income
+  const totalAdj = seDeductAmt + otherAdj;
+  const agi = max0(grossIncome - totalAdj);
+
+  const stdDed = getStdDed(status);
+  // QBI: 20% of net profit if AGI below threshold; subject to wage/property limits above threshold (simplified to 0 above)
+  const agiForQBI = agi;
+  let qbiDeduct = 0;
+  if (netProfit > 0) {
+    const qbiThreshold = status === 'MFJ' ? 394600 : 197300;
+    if (agiForQBI <= qbiThreshold) {
+      qbiDeduct = netProfit * 0.20;
+    } else {
+      // Above threshold: W-2 wage limit applies — simplified: 50% of W-2 wages paid by business
+      qbiDeduct = Math.min(netProfit * 0.20, w2WageOk * 0.50);
     }
-    if(step===1){
-      return '<h2>Income</h2>'+
-        field("Wages (W-2 box 1)","wages")+
-        field("Taxable interest","taxableInterest")+
-        '<div class="row">'+field("Ordinary dividends","ordinaryDividends")+field("Qualified dividends","qualifiedDividends")+'</div>'+
-        '<div class="row">'+field("Net long-term capital gains","netLongTermCapitalGains")+field("Net short-term capital gains","netShortTermCapitalGains")+'</div>'+
-        field("Retirement / IRA distributions (taxable)","retirementDistributions")+
-        field('Social Security benefits <span class="hint">total, box 5 — we compute the taxable part</span>',"socialSecurityBenefits")+
-        field("Self-employment net profit (Schedule C)","selfEmploymentNetProfit")+
-        field("Qualified business income (for §199A)","qualifiedBusinessIncome")+
-        '<div class="row">'+field("Qualified tips (2025 deduction)","qualifiedTips")+field("Qualified overtime (2025 deduction)","qualifiedOvertime")+'</div>'+
-        '<h2 style="font-size:15px;margin-top:18px">Credits</h2>'+
-        '<div class="row">'+field('College tuition paid <span class="hint">education credit</span>',"tuition")+field('IRA / 401(k) contributions <span class="hint">saver\'s credit</span>',"retirementContributions")+'</div>';
-    }
-    if(step===2){
-      return '<h2>Deductions</h2>'+
-        '<div class="field"><label>Deduction method</label><select data-key="deductionMethod">'+
-        ['auto|Optimize for me (recommended)','standard|Standard deduction','itemized|Itemize']
-          .map(function(o){var p=o.split("|");return '<option value="'+p[0]+'"'+(f.deductionMethod===p[0]?" selected":"")+'>'+p[1]+'</option>';}).join("")+
-        '</select></div>'+
-        '<p style="font-size:13px;color:var(--muted)">Enter itemized amounts; when set to optimize we use whichever is larger.</p>'+
-        field("State &amp; local taxes (SALT, capped $10k)","stateAndLocalTaxes")+
-        field("Home mortgage interest","mortgageInterest")+
-        field("Charitable contributions","charitableContributions");
-    }
-    if(step===3){
-      return '<h2>Payments</h2>'+
-        field("Federal income tax withheld (W-2 box 2)","federalWithholding")+
-        field("Estimated tax payments","estimatedPayments");
-    }
-    // Review
-    var r=TaxEngine.computeTax(toInput());
-    var emph={"9":1,"11":1,"15":1,"16":1,"22":1,"33":1,"34":1,"37":1};
-    var rows=r.lineItems.map(function(li){
-      return '<tr class="'+(emph[li[0]]?"emph":"")+'"><td class="ln">'+li[0]+'</td><td>'+li[1]+'</td><td class="amt">'+usd(li[2],2)+'</td></tr>';
-    }).join("");
-    var warns=(r.warnings||[]).map(function(w){return '<div class="warn">'+w+'</div>';}).join("");
-    return '<h2>Review &amp; save</h2><table><tbody>'+rows+'</tbody></table>'+warns+
-      '<div class="actions noprint" style="gap:10px;justify-content:flex-start;flex-wrap:wrap">'+
-      '<button class="btn" id="dlPacket" onclick="window.__downloadPacket&&window.__downloadPacket(this)">Download full filing packet (1040 + schedules)</button>'+
-      '<button class="btn ghost" id="dlIRS" onclick="window.__downloadIRS1040&&window.__downloadIRS1040(this)">Just the 1040</button>'+
-      '<button class="btn ghost" onclick="window.__print1040&&window.__print1040()">Print view</button></div>'+
-      '<div class="note">The <b>filing packet</b> gives you the filled official IRS Form 1040 (2025) <b>plus every schedule your return needs</b> (Schedule 1, 2, SE, 8812, 8995, D…) in one PDF — ready to review, print, or e-file yourself. Figures are for your review; verify against your documents before filing. This tool does not e-file for you.</div>';
   }
 
-  function bind(){
-    Array.prototype.forEach.call(el("panel").querySelectorAll("[data-key]"),function(inp){
-      var key=inp.getAttribute("data-key");
-      var ev=(inp.type==="checkbox")?"change":"input";
-      inp.addEventListener(ev,function(){
-        if(inp.type==="checkbox")f[key]=inp.checked;
-        else if(inp.type==="number")f[key]=inp.value===""?"":(key.indexOf("num")===0?Number(inp.value):inp.value);
-        else f[key]=inp.value;
-        renderSummary();
-      });
-    });
+  const taxableIncome = max0(agi - stdDed - qbiDeduct);
+  const ctc = calcCTC(numChildren, agi, status);
+  const {tax: regTax} = calcBracketTax(taxableIncome, status);
+  const totalTax = max0(regTax - ctc) + seTax;
+  const totalPmts = withheld + estPmts;
+  const balance = totalTax - totalPmts;
+
+  const el = document.getElementById('resultSC-content');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="result-line"><span>Net Schedule C Profit / (Loss)</span><span class="val">${fmt(netProfit)}</span></div>
+    <div class="result-line"><span>W-2 Wages</span><span class="val">${fmt(w2wages)}</span></div>
+    <div class="result-line"><span>Gross Income</span><span class="val">${fmt(grossIncome)}</span></div>
+    <div class="result-line"><span>SE Tax Deduction (½ of SE tax)</span><span class="val">(${fmt(seDeductAmt)})</span></div>
+    <div class="result-line"><span>Adjusted Gross Income</span><span class="val">${fmt(agi)}</span></div>
+    <div class="result-line"><span>Standard Deduction</span><span class="val">(${fmt(stdDed)})</span></div>
+    <div class="result-line"><span>QBI Deduction (20% of QBI)</span><span class="val">(${fmt(qbiDeduct)})</span></div>
+    <div class="result-line"><span>Taxable Income</span><span class="val">${fmt(taxableIncome)}</span></div>
+    <hr>
+    <div class="result-line"><span>Income Tax</span><span class="val">${fmt(regTax)}</span></div>
+    <div class="result-line"><span>Child Tax Credit</span><span class="val">(${fmt(ctc)})</span></div>
+    <div class="result-line"><span>SE Tax (SS: ${fmt(ssWages)} + Medicare: ${fmt(mcWages)}${addMC>0?' + AddlMC: '+fmt(addMC):''})</span><span class="val">${fmt(seTax)}</span></div>
+    <div class="result-line"><span>Total Tax Liability</span><span class="val">${fmt(totalTax)}</span></div>
+    <hr>
+    <div class="result-line"><span>Total Payments &amp; Withholding</span><span class="val">(${fmt(totalPmts)})</span></div>
+    <div class="${balance >= 0 ? 'amount-big owed' : 'amount-big refund'}">${fmt(Math.abs(balance))}</div>
+    <div class="amount-label">${balance >= 0 ? 'Amount Owed' : 'Refund'}</div>
+    <div class="result-line total ${balance >= 0 ? 'owed' : 'refund'}">
+      <span>${balance >= 0 ? 'TAX OWED' : 'REFUND DUE'}</span>
+      <span class="val">${balance >= 0 ? fmt(balance) : fmt(-balance)}</span>
+    </div>
+  `;
+}
+
+// ═══════════════════ VIEW 3: FORM 1120 C-CORP ═══════════════════
+function calc1120() {
+  const receipts = n('c-receipts');
+  const cogs = n('c-cogs');
+  const gprofit = max0(receipts - cogs);
+  const divs = n('c-divs');
+  const int = n('c-int');
+  const rents = n('c-rents');
+  const other = n('c-other');
+  const totalInc = gprofit + divs + int + rents + other;
+  const el_gp = document.getElementById('c-gprofit');
+  if (el_gp) el_gp.value = gprofit.toFixed(2);
+  const el_ti = document.getElementById('c-totalinc');
+  if (el_ti) el_ti.value = totalInc.toFixed(2);
+
+  const officers = n('c-officers');
+  const salaries = n('c-salaries');
+  const repairs = n('c-repairs');
+  const baddebts = n('c-baddebts');
+  const rentsded = n('c-rentsded');
+  const taxes = n('c-taxes');
+  const intded = n('c-intded');
+  const charityRaw = n('c-charity');
+  const depr = n('c-depr');
+  const depl = n('c-depl');
+  const adv = n('c-adv');
+  const pension = n('c-pension');
+  const empben = n('c-empben');
+  const otherded = n('c-otherded');
+
+  // Charitable 10% limit: apply after other deductions
+  const nonCharityDed = officers+salaries+repairs+baddebts+rentsded+taxes+intded+depr+depl+adv+pension+empben+otherded;
+  const tiBeforeCharity = max0(totalInc - nonCharityDed);
+  const charityAllowed = Math.min(charityRaw, tiBeforeCharity * 0.10);
+  const totalDed = nonCharityDed + charityAllowed;
+
+  const el_td = document.getElementById('c-totalded');
+  if (el_td) el_td.value = totalDed.toFixed(2);
+
+  const taxableInc = max0(totalInc - totalDed);
+  const tax = taxableInc * 0.21;
+
+  const q1=n('c-q1'), q2=n('c-q2'), q3=n('c-q3'), q4=n('c-q4');
+  const totalPmts = q1+q2+q3+q4;
+  const balance = tax - totalPmts;
+
+  const el = document.getElementById('result1120-content');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="result-line"><span>Gross Receipts</span><span class="val">${fmt(receipts)}</span></div>
+    <div class="result-line"><span>Cost of Goods Sold</span><span class="val">(${fmt(cogs)})</span></div>
+    <div class="result-line"><span>Gross Profit (Line 3)</span><span class="val">${fmt(gprofit)}</span></div>
+    <div class="result-line"><span>Total Income (Line 11)</span><span class="val">${fmt(totalInc)}</span></div>
+    <div class="result-line"><span>Total Deductions (Line 27)</span><span class="val">(${fmt(totalDed)})</span></div>
+    ${charityRaw > charityAllowed ? `<p style="font-size:12px;color:var(--muted)">Charitable contributions limited to 10% of taxable income: ${fmt(charityAllowed)} allowed of ${fmt(charityRaw)} entered.</p>` : ''}
+    <div class="result-line"><span>Taxable Income (Line 30)</span><span class="val">${fmt(taxableInc)}</span></div>
+    <div class="result-line"><span>Corporate Income Tax @ 21% (Line 31)</span><span class="val">${fmt(tax)}</span></div>
+    <hr>
+    <div class="result-line"><span>Estimated Payments (Q1–Q4)</span><span class="val">(${fmt(totalPmts)})</span></div>
+    <div class="${balance >= 0 ? 'amount-big owed' : 'amount-big refund'}">${fmt(Math.abs(balance))}</div>
+    <div class="amount-label">${balance >= 0 ? 'Tax Owed with Return' : 'Overpayment / Refund'}</div>
+    <div class="result-line total ${balance >= 0 ? 'owed' : 'refund'}">
+      <span>${balance >= 0 ? 'BALANCE DUE' : 'REFUND'}</span>
+      <span class="val">${fmt(Math.abs(balance))}</span>
+    </div>
+  `;
+}
+
+// ═══════════════════ VIEW 4: FORM 1120-S ═══════════════════
+function calc1120S() {
+  const receipts = n('s-receipts');
+  const cogs = n('s-cogs');
+  const gprofit = max0(receipts - cogs);
+  const int = n('s-int');
+  const divs = n('s-divs');
+  const rents = n('s-rents');
+  const other = n('s-other');
+  const totalInc = gprofit + int + divs + rents + other;
+
+  const officers = n('s-officers');
+  const salaries = n('s-salaries');
+  const repairs = n('s-repairs');
+  const rentsded = n('s-rentsded');
+  const taxes = n('s-taxes');
+  const intded = n('s-intded');
+  const depr = n('s-depr');
+  const adv = n('s-adv');
+  const empben = n('s-empben');
+  const pension = n('s-pension');
+  const otherded = n('s-otherded');
+  const totalDed = officers+salaries+repairs+rentsded+taxes+intded+depr+adv+empben+pension+otherded;
+  const ordinaryInc = totalInc - totalDed;
+
+  // Update K-1 rows
+  const rows = document.querySelectorAll('#s-k1-body tr');
+  let totalPct = 0;
+  let k1HTML = '';
+  rows.forEach(row => {
+    const pct = parseFloat(row.querySelector('.k1-pct')?.value) || 0;
+    totalPct += pct;
+    const share = ordinaryInc * pct / 100;
+    const dedShare = totalDed * pct / 100;
+    const shareEl = row.querySelector('.k1-share');
+    const dedEl = row.querySelector('.k1-ded');
+    if (shareEl) shareEl.value = share.toFixed(2);
+    if (dedEl) dedEl.value = dedShare.toFixed(2);
+    const name = row.querySelector('.k1-name')?.value || '(unnamed)';
+    k1HTML += `<tr><td>${name}</td><td>${pct.toFixed(1)}%</td><td>${fmt(share)}</td><td>${fmt(dedShare)}</td></tr>`;
+  });
+
+  const el = document.getElementById('result1120S-content');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="result-line"><span>Total Income</span><span class="val">${fmt(totalInc)}</span></div>
+    <div class="result-line"><span>Total Deductions</span><span class="val">(${fmt(totalDed)})</span></div>
+    <div class="result-line"><span>Ordinary Business Income / (Loss)</span><span class="val">${fmt(ordinaryInc)}</span></div>
+    <hr>
+    <p style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--navy)">Schedule K-1 Allocations</p>
+    ${totalPct !== 100 && rows.length > 0 ? `<p style="font-size:12px;color:var(--red);margin-bottom:6px">⚠ Ownership percentages total ${totalPct.toFixed(1)}% (should be 100%)</p>` : ''}
+    <table class="bracket-table"><thead><tr><th>Shareholder</th><th>Ownership</th><th>Share of Income</th><th>Share of Deductions</th></tr></thead><tbody>${k1HTML || '<tr><td colspan=4 style="color:var(--muted)">No shareholders added</td></tr>'}</tbody></table>
+    <p style="font-size:12px;color:var(--muted);margin-top:10px">No S corporation-level tax. Shareholders report their K-1 income on Form 1040.</p>
+  `;
+}
+
+function addShareholder() {
+  const tbody = document.getElementById('s-k1-body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" class="k1-name" placeholder="Name" oninput="calc1120S()"></td>
+    <td><input type="number" class="k1-pct" placeholder="%" min="0" max="100" oninput="calc1120S()" style="width:70px"></td>
+    <td><input type="number" class="k1-share" readonly style="background:#f8f9fa;width:110px"></td>
+    <td><input type="number" class="k1-ded" readonly style="background:#f8f9fa;width:110px"></td>
+    <td><button onclick="this.closest('tr').remove();calc1120S()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calc1120S();
+}
+
+// ═══════════════════ VIEW 5: FORM 1065 ═══════════════════
+function calc1065() {
+  const receipts = n('p-receipts');
+  const cogs = n('p-cogs');
+  const gprofit = max0(receipts - cogs);
+  const int = n('p-int');
+  const divs = n('p-divs');
+  const rents = n('p-rents');
+  const other = n('p-other');
+  const totalInc = gprofit + int + divs + rents + other;
+
+  const salaries = n('p-salaries');
+  const gp = n('p-gp');
+  const repairs = n('p-repairs');
+  const rentsded = n('p-rentsded');
+  const taxes = n('p-taxes');
+  const intded = n('p-intded');
+  const depr = n('p-depr');
+  const empben = n('p-empben');
+  const otherded = n('p-otherded');
+  const totalDed = salaries+gp+repairs+rentsded+taxes+intded+depr+empben+otherded;
+  const ordinaryInc = totalInc - totalDed;
+
+  // Update partner K-1 rows
+  const rows = document.querySelectorAll('#p-k1-body tr');
+  let totalPct = 0;
+  let k1HTML = '';
+  const totalGP = gp;
+  rows.forEach(row => {
+    const pct = parseFloat(row.querySelector('.pk1-pct')?.value) || 0;
+    totalPct += pct;
+    const share = ordinaryInc * pct / 100;
+    const gpShare = totalGP * pct / 100;
+    const partnerType = row.querySelector('.pk1-type')?.value || 'general';
+    const seInc = partnerType === 'general' ? share + gpShare : 0;
+    const shareEl = row.querySelector('.pk1-share');
+    const seEl = row.querySelector('.pk1-se');
+    if (shareEl) shareEl.value = share.toFixed(2);
+    if (seEl) seEl.value = seInc.toFixed(2);
+    const name = row.querySelector('.pk1-name')?.value || '(unnamed)';
+    k1HTML += `<tr><td>${name}</td><td>${partnerType}</td><td>${pct.toFixed(1)}%</td><td>${fmt(share)}</td><td>${fmt(gpShare)}</td><td>${fmt(seInc)}</td></tr>`;
+  });
+
+  const el = document.getElementById('result1065-content');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="result-line"><span>Total Income</span><span class="val">${fmt(totalInc)}</span></div>
+    <div class="result-line"><span>Guaranteed Payments to Partners</span><span class="val">(${fmt(gp)})</span></div>
+    <div class="result-line"><span>Other Deductions</span><span class="val">(${fmt(totalDed - gp)})</span></div>
+    <div class="result-line"><span>Ordinary Business Income / (Loss)</span><span class="val">${fmt(ordinaryInc)}</span></div>
+    <hr>
+    <p style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--navy)">Schedule K-1 Partner Allocations</p>
+    ${totalPct !== 100 && rows.length > 0 ? `<p style="font-size:12px;color:var(--red);margin-bottom:6px">⚠ Ownership percentages total ${totalPct.toFixed(1)}% (should be 100%)</p>` : ''}
+    <table class="bracket-table"><thead><tr><th>Partner</th><th>Type</th><th>Ownership</th><th>Distributive Share</th><th>Guaranteed Pmts</th><th>SE Income</th></tr></thead><tbody>${k1HTML || '<tr><td colspan=6 style="color:var(--muted)">No partners added</td></tr>'}</tbody></table>
+    <p style="font-size:12px;color:var(--muted);margin-top:10px">General partners report SE income on Schedule SE. Limited partners generally do not owe SE tax on distributive share.</p>
+  `;
+}
+
+function addPartner() {
+  const tbody = document.getElementById('p-k1-body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" class="pk1-name" placeholder="Name" oninput="calc1065()"></td>
+    <td><select class="pk1-type" onchange="calc1065()"><option value="general">General</option><option value="limited">Limited</option></select></td>
+    <td><input type="number" class="pk1-pct" placeholder="%" min="0" max="100" oninput="calc1065()" style="width:70px"></td>
+    <td><input type="number" class="pk1-share" readonly style="background:#f8f9fa;width:100px"></td>
+    <td><input type="number" placeholder="add'l" min="0" oninput="calc1065()" style="width:90px"></td>
+    <td><input type="number" class="pk1-se" readonly style="background:#f8f9fa;width:100px"></td>
+    <td><button onclick="this.closest('tr').remove();calc1065()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calc1065();
+}
+
+// ═══════════════════ VIEW 6: FORM 1041 ═══════════════════
+function calc1041() {
+  const typeVal = document.getElementById('t-type')?.value || 'estate';
+  const exemptions = {estate:600, simple:300, complex:100};
+  const exemption = exemptions[typeVal] || 600;
+  const el_ex = document.getElementById('t-exemption');
+  if (el_ex) el_ex.value = exemption;
+
+  const totalInc = n('t-int') + n('t-divs') + n('t-biz') + n('t-capgains') + n('t-rents') + n('t-other');
+  const totalDed = n('t-intded') + n('t-taxes') + n('t-fees') + n('t-legal') + n('t-charity') + n('t-depr') + n('t-otherded');
+  const distrib = n('t-distrib');
+  const taxableInc = max0(totalInc - totalDed - distrib - exemption);
+
+  // 2025 Trust/Estate brackets
+  let tax = 0;
+  const tBrackets = [[3150,0.10],[11450,0.24],[15650,0.35],[Infinity,0.37]];
+  let ti = taxableInc, prev = 0;
+  const bracketDetail = [];
+  for (const [top, rate] of tBrackets) {
+    if (ti <= 0) break;
+    const taxable = Math.min(ti, top - prev);
+    const t = taxable * rate;
+    if (taxable > 0) bracketDetail.push({rate, from:prev, to:Math.min(taxableInc, top), taxable, tax:t});
+    tax += t;
+    ti -= taxable;
+    prev = top;
   }
 
-  function renderSummary(){
-    var r=TaxEngine.computeTax(toInput());
-    var refund=r.refundOwed>=0;
-    el("summary").innerHTML='<h3>Live 2025 estimate</h3>'+
-      '<div class="big '+(refund?"refund":"owed")+'">'+usd(Math.abs(r.refundOwed))+'</div>'+
-      '<div style="color:var(--muted);font-size:13px;margin-bottom:12px">'+(refund?"Estimated refund":"Estimated balance due")+'</div>'+
-      line("Total income",r.totalIncome)+line("AGI",r.adjustedGrossIncome)+
-      line("Deduction ("+r.deductionMethodUsed+")",r.deductionTaken)+
-      line("Taxable income",r.taxableIncome)+line("Total tax",r.totalTax)+
-      line("Effective rate",(r.effectiveRate*100).toFixed(1)+"%",true)+
-      line("Marginal rate",(r.marginalRate*100).toFixed(0)+"%",true);
-  }
-  function line(a,b,raw){return '<div class="line"><span>'+a+'</span><span>'+(raw?b:usd(b))+'</span></div>';}
+  const bracketRows = bracketDetail.map(b =>
+    `<tr><td>${b.rate*100}%</td><td>${fmt(b.from)} – ${fmt(Math.min(b.to,15650))||'over $15,650'}</td><td>${fmt(b.taxable)}</td><td>${fmt(b.tax)}</td></tr>`
+  ).join('');
 
-  function render(){
-    renderSteps();
-    var showNext=step<STEPS.length-1;
-    el("panel").innerHTML=panelHtml()+
-      '<div class="actions noprint">'+
-      '<button class="btn ghost" id="back"'+(step===0?" disabled":"")+'>&larr; Back</button>'+
-      (showNext?'<button class="btn" id="next">Next &rarr;</button>':'<span></span>')+
-      '</div>';
-    bind();
-    var b=el("back"),nx=el("next");
-    if(b)b.onclick=function(){if(step>0){step--;render();}};
-    if(nx)nx.onclick=function(){if(step<STEPS.length-1){step++;render();}};
-    renderSummary();
-  }
+  const el = document.getElementById('result1041-content');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="result-line"><span>Total Income</span><span class="val">${fmt(totalInc)}</span></div>
+    <div class="result-line"><span>Total Deductions</span><span class="val">(${fmt(totalDed)})</span></div>
+    <div class="result-line"><span>Income Distribution Deduction</span><span class="val">(${fmt(distrib)})</span></div>
+    <div class="result-line"><span>Exemption (${typeVal})</span><span class="val">(${fmt(exemption)})</span></div>
+    <div class="result-line"><span>Taxable Income</span><span class="val">${fmt(taxableInc)}</span></div>
+    <hr>
+    <p style="font-size:12px;color:var(--muted);margin:6px 0 4px">2025 Compressed Trust/Estate Tax Brackets</p>
+    <table class="bracket-table"><thead><tr><th>Rate</th><th>Range</th><th>Taxable</th><th>Tax</th></tr></thead><tbody>${bracketRows||'<tr><td colspan=4 style="color:var(--muted)">No taxable income</td></tr>'}</tbody></table>
+    <div class="${tax > 0 ? 'amount-big owed' : 'amount-big refund'}">${fmt(tax)}</div>
+    <div class="amount-label">${tax > 0 ? 'Estate / Trust Tax Owed' : 'No Tax Owed'}</div>
+    <div class="result-line total ${tax > 0 ? 'owed' : 'refund'}">
+      <span>TAX OWED</span><span class="val">${fmt(tax)}</span>
+    </div>
+  `;
+}
 
-  // ---- Official IRS Form 1040 (2025) renderer ----
-  function frow(no,lab,amt,strong){
-    var a = amt===""||amt==null ? "" : usd(amt,0);
-    return '<div class="f-row"'+(strong?' style="font-weight:700"':'')+'>'+
-      '<div class="no">'+no+'</div><div class="lab">'+lab+'</div><div class="amt">'+a+'</div></div>';
-  }
-  function statusBoxes(sel){
-    var opts=[["single","Single"],["married_jointly","Married filing jointly"],
-      ["married_separately","Married filing separately"],["head_of_household","Head of household"],
-      ["qualifying_surviving_spouse","Qualifying surviving spouse"]];
-    return opts.map(function(o){
-      return '<span style="margin-right:14px"><span class="box">'+(o[0]===sel?"X":"")+'</span>'+o[1]+'</span>';
-    }).join("");
-  }
-  window.__close1040=function(){document.body.classList.remove("show1040");window.scrollTo(0,0);};
-  window.__print1040=function(){
-    var inp=toInput(); var r=TaxEngine.computeTax(inp);
-    var name=((f.firstName||"")+" "+(f.lastName||"")).trim();
-    var wages=Number(inp.wages)||0, interest=Number(inp.taxableInterest)||0;
-    var qDiv=Number(inp.qualifiedDividends)||0, oDiv=Number(inp.ordinaryDividends)||0;
-    var ltcg=Number(inp.netLongTermCapitalGains)||0;
-    var retire=Number(inp.retirementDistributions)||0;
-    var seProfit=Number(inp.selfEmploymentNetProfit)||0;
-    var wh=Number(inp.federalWithholding)||0, est=Number(inp.estimatedPayments)||0;
-    var credits19=r.childTaxCredit+r.otherDependentCredit;
-    var line22=Math.max(0,r.tentativeTax-credits19);
-    var otherTax=r.selfEmploymentTax+r.additionalMedicareTax+r.netInvestmentIncomeTax;
-    var otherPay=r.earnedIncomeCredit+r.additionalChildTaxCredit;
+// ═══════════════════ VIEW 7: FORM 990 / 990-T ═══════════════════
+function calc990() {
+  // 990 totals
+  const revPY = n('np-contrib-py')+n('np-prog-py')+n('np-invest-py')+n('np-otherrev-py');
+  const revCY = n('np-contrib-cy')+n('np-prog-cy')+n('np-invest-cy')+n('np-otherrev-cy');
+  const expPY = n('np-grants-py')+n('np-membben-py')+n('np-comp-py')+n('np-profees-py')+n('np-otherexp-py');
+  const expCY = n('np-grants-cy')+n('np-membben-cy')+n('np-comp-cy')+n('np-profees-cy')+n('np-otherexp-cy');
 
-    var bar='<div class="f1040-bar noprint">'+
-      '<div>Official IRS Form 1040 · Tax year 2025</div>'+
-      '<div><button class="btn" onclick="window.print()">Print / Save as PDF</button>'+
-      '<button class="btn ghost" style="color:#fff;border-color:#4a5d8f" onclick="window.__close1040()">Close</button></div></div>';
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v.toFixed(2); };
+  setVal('np-totalrev-py', revPY);
+  setVal('np-totalrev-cy', revCY);
+  setVal('np-totalexp-py', expPY);
+  setVal('np-totalexp-cy', expCY);
+  setVal('np-surplus-py', revPY - expPY);
+  setVal('np-surplus-cy', revCY - expCY);
 
-    var page1='<div class="page1040">'+
-      '<div class="f-head"><div><div class="t">Form 1040</div>'+
-        '<div class="sub">U.S. Individual Income Tax Return</div></div>'+
-        '<div class="f-omb"><div style="font-size:18px;font-weight:700">2025</div>'+
-        'Dept. of the Treasury — IRS<br>OMB No. 1545-0074</div></div>'+
-      '<div class="f-id"><div><b>Name</b>'+(name||"&nbsp;")+'</div>'+
-        '<div><b>Social security number</b>___-__-____</div></div>'+
-      '<div class="f-status"><b style="display:block;font-size:10px;text-transform:uppercase">Filing Status</b>'+
-        statusBoxes(inp.filingStatus)+'</div>'+
-      frow("1a","Total amount from Form(s) W-2, box 1",wages)+
-      frow("1z","Total wages",wages)+
-      frow("2b","Taxable interest",interest)+
-      frow("3a","Qualified dividends",qDiv)+
-      frow("3b","Ordinary dividends",oDiv)+
-      frow("5b","Pensions, annuities, and IRA distributions (taxable)",retire)+
-      frow("6b","Taxable Social Security benefits",Number(inp.taxableSocialSecurity)||0)+
-      frow("7","Capital gain or (loss)",ltcg+(Number(inp.netShortTermCapitalGains)||0))+
-      frow("8","Additional income from Schedule 1 (incl. Schedule C)",seProfit+(Number(inp.otherIncome)||0))+
-      frow("9","Total income",r.totalIncome,true)+
-      frow("10","Adjustments to income",r.adjustmentsToIncome)+
-      frow("11","Adjusted gross income (AGI)",r.adjustedGrossIncome,true)+
-      frow("12","Standard or itemized deduction ("+r.deductionMethodUsed+")",r.deductionTaken)+
-      (r.seniorDeduction?frow("13a","Additional deduction for age 65+ (2025)",r.seniorDeduction):"")+
-      (r.tipsDeduction?frow("13b","Deduction for qualified tips (2025)",r.tipsDeduction):"")+
-      (r.overtimeDeduction?frow("13c","Deduction for qualified overtime (2025)",r.overtimeDeduction):"")+
-      frow("13d","Qualified business income deduction",r.qbiDeduction)+
-      frow("14","Total deductions",r.deductionTaken+r.seniorDeduction+r.tipsDeduction+r.overtimeDeduction+r.qbiDeduction)+
-      frow("15","Taxable income",r.taxableIncome,true)+
-      '<div class="f-pg">Form 1040 (2025) — Page 1</div></div>';
+  const assetsBegin = n('np-assets-begin');
+  setVal('np-assets-end', assetsBegin + (revCY - expCY));
 
-    var page2='<div class="page1040">'+
-      '<div class="f-head"><div><div class="t">Form 1040 (2025)</div>'+
-        '<div class="sub">Tax, Credits, and Payments</div></div>'+
-        '<div class="f-omb">'+(name||"")+'</div></div>'+
-      frow("16","Tax (from Qualified Dividends & Capital Gain Worksheet)",r.tentativeTax)+
-      frow("18","Add lines 16 and 17",r.tentativeTax)+
-      frow("19","Child tax credit / credit for other dependents",credits19)+
-      frow("21","Total credits",credits19)+
-      frow("22","Subtract line 21 from line 18",line22,true)+
-      frow("23","Other taxes (self-employment, Add'l Medicare, NIIT)",otherTax)+
-      frow("24","Total tax",r.totalTax,true)+
-      frow("25d","Federal income tax withheld",wh)+
-      frow("26","Estimated tax payments",est)+
-      frow("27","Earned income credit (EIC)",r.earnedIncomeCredit)+
-      frow("28","Additional child tax credit",r.additionalChildTaxCredit)+
-      frow("32","Total other payments and refundable credits",otherPay)+
-      frow("33","Total payments",r.totalPayments,true)+
-      (r.refundOwed>=0
-        ? frow("34","Overpayment (amount you overpaid)",r.refundOwed,true)+frow("35a","Amount to be refunded to you",r.refundOwed,true)
-        : frow("37","Amount you owe",-r.refundOwed,true))+
-      '<div class="f-note">This document reproduces the Form 1040 line structure for tax year 2025 and is filled from the figures you entered. '+
-      'It is an estimate for your review — verify against your source documents and the official IRS instructions before filing. This tool does not e-file. '+
-      'Effective rate '+(r.effectiveRate*100).toFixed(1)+'% · marginal rate '+(r.marginalRate*100).toFixed(0)+'%.</div>'+
-      '<div class="f-pg">Form 1040 (2025) — Page 2</div></div>';
+  // 990-T
+  const ubiGross = n('np-ubi-gross');
+  const ubiDed = n('np-ubi-ded');
+  const ubiNOL = n('np-ubi-nol');
+  const netUBI = max0(ubiGross - ubiDed - ubiNOL);
+  const ubiTax = netUBI * 0.21;
+  const ubiPmts = n('np-ubi-pmts');
+  const balance = ubiTax - ubiPmts;
 
-    document.getElementById("f1040").innerHTML=bar+page1+page2;
-    document.body.classList.add("show1040");
-    window.scrollTo(0,0);
-  };
+  const el = document.getElementById('result990-content');
+  if (!el) return;
+  el.innerHTML = `
+    <p style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px">Form 990 — Summary (Informational)</p>
+    <div class="result-line"><span>Current Year Total Revenue</span><span class="val">${fmt(revCY)}</span></div>
+    <div class="result-line"><span>Current Year Total Expenses</span><span class="val">${fmt(expCY)}</span></div>
+    <div class="result-line"><span>Revenue Minus Expenses</span><span class="val ${revCY-expCY >= 0 ? 'refund' : 'owed'}">${fmt(revCY-expCY)}</span></div>
+    <hr>
+    <p style="font-size:13px;font-weight:600;color:var(--navy);margin:10px 0 8px">Form 990-T — Unrelated Business Income Tax</p>
+    <div class="result-line"><span>Gross UBI</span><span class="val">${fmt(ubiGross)}</span></div>
+    <div class="result-line"><span>Specific Deductions</span><span class="val">(${fmt(ubiDed)})</span></div>
+    <div class="result-line"><span>NOL Deduction</span><span class="val">(${fmt(ubiNOL)})</span></div>
+    <div class="result-line"><span>Net Unrelated Business Taxable Income</span><span class="val">${fmt(netUBI)}</span></div>
+    <div class="result-line"><span>UBI Tax @ 21%</span><span class="val">${fmt(ubiTax)}</span></div>
+    <div class="result-line"><span>Estimated Payments</span><span class="val">(${fmt(ubiPmts)})</span></div>
+    <div class="${balance >= 0 ? 'amount-big owed' : 'amount-big refund'}">${fmt(Math.abs(balance))}</div>
+    <div class="amount-label">${balance >= 0 ? 'UBI Tax Owed' : 'Overpayment'}</div>
+    <div class="result-line total ${balance >= 0 ? 'owed' : 'refund'}">
+      <span>${balance >= 0 ? 'BALANCE DUE' : 'REFUND'}</span>
+      <span class="val">${fmt(Math.abs(balance))}</span>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">The Form 990 itself is an informational return only. Tax is owed solely on unrelated business income.</p>
+  `;
+}
 
-  // ---- Fill the OFFICIAL IRS Form 1040 (2025) PDF, client-side ----
-  // Field map verified by rendering the real f1040-2025.pdf. All names carry the
-  // "[0]" suffix. Money lines, identity, and filing status confirmed on-page.
-  var P1="topmostSubform[0].Page1[0].", P2="topmostSubform[0].Page2[0].";
-  function m1040(n){ return n ? Math.round(n).toString() : ""; }
-
-  // Fill the official 1040 template and return the loaded PDFDocument (unsaved).
-  async function fill1040Doc(inp, r){
-    var bytes=await fetch("f1040-2025.pdf").then(function(x){return x.arrayBuffer();});
-    var doc=await PDFLib.PDFDocument.load(bytes);
-    var form=doc.getForm();
-    var set=function(name,val){ if(val===""||val==null)return; try{form.getTextField(name+"[0]").setText(String(val));}catch(e){} };
-    var check=function(name){ try{form.getCheckBox(name).check();}catch(e){} };
-    set(P1+"f1_14",((f.firstName||"")).trim());
-    set(P1+"f1_15",((f.lastName||"")).trim());
-    var fsMap={single:"Checkbox_ReadOrder[0].c1_8[0]",married_jointly:"Checkbox_ReadOrder[0].c1_8[1]",
-      married_separately:"Checkbox_ReadOrder[0].c1_8[2]",head_of_household:"c1_8[0]",qualifying_surviving_spouse:"c1_8[1]"};
-    check(P1+fsMap[inp.filingStatus]);
-    var wages=Number(inp.wages)||0;
-    var cap=Number(r.netCapitalGain)||0;
-    var sch1=(Number(r.scheduleCNetProfit)||0)+(Number(inp.otherIncome)||0);
-    set(P1+"f1_47",m1040(wages)); set(P1+"f1_57",m1040(wages));
-    set(P1+"f1_59",m1040(Number(inp.taxableInterest)||0));
-    set(P1+"f1_60",m1040(Number(inp.qualifiedDividends)||0));
-    set(P1+"f1_61",m1040(Number(inp.ordinaryDividends)||0));
-    set(P1+"f1_66",m1040(Number(inp.retirementDistributions)||0));
-    set(P1+"f1_69",m1040(Number(r.taxableSocialSecurity)||0));
-    set(P1+"f1_70",m1040(cap));
-    set(P1+"f1_72",m1040(sch1));
-    set(P1+"f1_73",m1040(r.totalIncome));
-    set(P1+"f1_74",m1040(r.adjustmentsToIncome));
-    set(P1+"f1_75",m1040(r.adjustedGrossIncome));
-    var add13b=r.obbbaAdditionalDeductions||0;
-    var line14=r.deductionTaken+r.qbiDeduction+add13b;
-    var credits19=r.childTaxCredit+r.otherDependentCredit;
-    var taxAfterAmt=r.tentativeTax+(r.alternativeMinimumTax||0);
-    var line22=Math.max(0,taxAfterAmt-credits19);
-    var wh=Number(inp.federalWithholding)||0;
-    var otherPay=r.earnedIncomeCredit+r.additionalChildTaxCredit+(r.educationCreditRefundable||0);
-    set(P2+"f2_01",m1040(r.adjustedGrossIncome));
-    set(P2+"f2_02",m1040(r.deductionTaken));
-    set(P2+"f2_03",m1040(r.qbiDeduction));
-    set(P2+"f2_04",m1040(add13b));
-    set(P2+"f2_05",m1040(line14));
-    set(P2+"f2_06",m1040(r.taxableIncome));
-    set(P2+"f2_08",m1040(taxAfterAmt));
-    set(P2+"f2_10",m1040(taxAfterAmt));
-    set(P2+"f2_11",m1040(credits19));
-    set(P2+"f2_13",m1040(credits19));
-    set(P2+"f2_14",m1040(line22));
-    set(P2+"f2_15",m1040(r.totalOtherTaxes||0));
-    set(P2+"f2_16",m1040(r.totalTax));
-    set(P2+"f2_17",m1040(wh)); set(P2+"f2_20",m1040(wh));
-    set(P2+"f2_21",m1040(Number(inp.estimatedPayments)||0));
-    set(P2+"f2_23",m1040(r.earnedIncomeCredit));
-    set(P2+"f2_24",m1040(r.additionalChildTaxCredit));
-    set(P2+"f2_28",m1040(otherPay));
-    set(P2+"f2_29",m1040(r.totalPayments));
-    if(r.refundOwed>=0){ set(P2+"f2_30",m1040(r.refundOwed)); set(P2+"f2_31",m1040(r.refundOwed)); }
-    else set(P2+"f2_35",m1040(-r.refundOwed));
-    form.updateFieldAppearances();
-    return doc;
-  }
-
-  function dl(bytes, filename){
-    var blob=new Blob([bytes],{type:"application/pdf"});
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement("a"); a.href=url; a.download=filename; a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  window.__downloadIRS1040=async function(btn){
-    if(typeof PDFLib==="undefined"){ alert("PDF library still loading — try again."); return; }
-    var label=btn?btn.textContent:""; if(btn){ btn.textContent="Generating…"; btn.disabled=true; }
-    try{
-      var inp=toInput(), r=TaxEngine.computeTax(inp);
-      var doc=await fill1040Doc(inp, r);
-      dl(await doc.save(), "Form-1040-2025-filled.pdf");
-    }catch(e){ alert("Could not generate the IRS PDF: "+e.message); }
-    finally{ if(btn){ btn.textContent=label; btn.disabled=false; } }
-  };
-
-  // ---- Generated schedule pages (mirror the app's schedulePages.ts) ----
-  function schedulesFor(inp, r){
-    var nz=function(x){return Number(x)||0;};
-    var out=[], half=function(){return r.selfEmploymentTax/2;};
-    if(nz(r.scheduleCNetProfit)||nz(inp.otherIncome)||nz(r.adjustmentsToIncome))
-      out.push({title:"Schedule 1 (Form 1040)",sub:"Additional Income and Adjustments to Income",rows:[
-        ["3","Business income or (loss) (Schedule C)",nz(r.scheduleCNetProfit)],
-        ["8","Other income",nz(inp.otherIncome)],
-        ["10","Total additional income (to Form 1040, line 8)",nz(r.scheduleCNetProfit)+nz(inp.otherIncome)],
-        ["","— Part II: Adjustments to Income —",null],
-        ["15","Deductible part of self-employment tax",half()],
-        ["25","Total adjustments (to Form 1040, line 10)",r.adjustmentsToIncome]]});
-    if(nz(r.alternativeMinimumTax)+nz(r.selfEmploymentTax)+nz(r.additionalMedicareTax)+nz(r.netInvestmentIncomeTax)>0)
-      out.push({title:"Schedule 2 (Form 1040)",sub:"Additional Taxes",rows:[
-        ["1","Alternative minimum tax (Form 6251)",nz(r.alternativeMinimumTax)],
-        ["3","Total Part I (to Form 1040, line 17)",nz(r.alternativeMinimumTax)],
-        ["","— Part II: Other Taxes —",null],
-        ["4","Self-employment tax (Schedule SE)",nz(r.selfEmploymentTax)],
-        ["11","Additional Medicare Tax",nz(r.additionalMedicareTax)],
-        ["12","Net investment income tax",nz(r.netInvestmentIncomeTax)],
-        ["21","Total other taxes (to Form 1040, line 23)",nz(r.totalOtherTaxes)]]});
-    if(nz(r.educationCreditNonRefundable)+nz(r.saversCredit)>0)
-      out.push({title:"Schedule 3 (Form 1040)",sub:"Additional Credits and Payments",rows:[
-        ["3","Education credits (Form 8863, nonrefundable)",nz(r.educationCreditNonRefundable)],
-        ["4","Retirement savings contributions credit (Form 8880)",nz(r.saversCredit)],
-        ["8","Total nonrefundable credits (to Form 1040, line 20)",nz(r.educationCreditNonRefundable)+nz(r.saversCredit)]]});
-    if(nz(r.selfEmploymentTax)>0)
-      out.push({title:"Schedule SE (Form 1040)",sub:"Self-Employment Tax",rows:[
-        ["2","Net profit from Schedule C",nz(r.scheduleCNetProfit)],
-        ["4a","Net earnings from self-employment (× 92.35%)",Math.round(nz(r.scheduleCNetProfit)*0.9235)],
-        ["12","Self-employment tax (to Schedule 2, line 4)",nz(r.selfEmploymentTax)],
-        ["13","Deduction for one-half of SE tax (to Schedule 1, line 15)",half()]]});
-    if(nz(r.childTaxCredit)+nz(r.otherDependentCredit)+nz(r.additionalChildTaxCredit)>0)
-      out.push({title:"Schedule 8812 (Form 1040)",sub:"Credits for Qualifying Children and Other Dependents",rows:[
-        ["1","Adjusted gross income (Form 1040, line 11)",nz(r.adjustedGrossIncome)],
-        ["12","Child tax credit / ODC (to Form 1040, line 19)",nz(r.childTaxCredit)+nz(r.otherDependentCredit)],
-        ["27","Additional child tax credit — refundable (to line 28)",nz(r.additionalChildTaxCredit)]]});
-    if(nz(r.qbiDeduction)>0)
-      out.push({title:"Form 8995",sub:"Qualified Business Income Deduction (Simplified)",rows:[
-        ["1","Total qualified business income",nz(inp.qualifiedBusinessIncome)],
-        ["5","QBI component (20% of line 1)",Math.round(nz(inp.qualifiedBusinessIncome)*0.2)],
-        ["15","QBI deduction (to Form 1040, line 13)",nz(r.qbiDeduction)]]});
-    if(nz(r.netCapitalGain)!==0){
-      var rows=[["16","Total capital gain or (loss) (to Form 1040, line 7)",nz(r.netCapitalGain)]];
-      if(nz(r.capitalLossCarryoverNextYear)<0) rows.push(["","Capital loss carryover to 2026: "+usd(Math.abs(nz(r.capitalLossCarryoverNextYear)),2),null]);
-      out.push({title:"Schedule D (Form 1040)",sub:"Capital Gains and Losses",rows:rows});
-    }
-    return out;
-  }
-
-  async function drawSchedulePage(out, sched, font, bold, taxpayer){
-    var rgb=PDFLib.rgb, page=out.addPage([612,792]);
-    var navy=rgb(0.09,0.15,0.33), gray=rgb(0.4,0.4,0.4);
-    page.drawText(sched.title,{x:40,y:748,size:15,font:bold,color:navy});
-    page.drawText(sched.sub,{x:40,y:730,size:10,font:font,color:gray});
-    page.drawText("2025 · "+taxpayer,{x:400,y:748,size:10,font:font,color:gray});
-    page.drawLine({start:{x:40,y:722},end:{x:572,y:722},thickness:1.5,color:navy});
-    var y=700;
-    sched.rows.forEach(function(row){
-      if(row[2]===null){ page.drawText(row[1],{x:40,y:y,size:9.5,font:bold,color:navy}); y-=20; return; }
-      var emph=/Total|to Form 1040|to Schedule|to line/i.test(row[1]);
-      var ff=emph?bold:font;
-      page.drawText(row[0],{x:44,y:y,size:9,font:font,color:gray});
-      page.drawText(row[1],{x:80,y:y,size:10,font:ff,color:emph?navy:rgb(0.15,0.15,0.15)});
-      var t=usd(row[2],2), w=ff.widthOfTextAtSize(t,10);
-      page.drawText(t,{x:572-w,y:y,size:10,font:ff,color:emph?navy:rgb(0.15,0.15,0.15)});
-      page.drawLine({start:{x:40,y:y-5},end:{x:572,y:y-5},thickness:0.4,color:rgb(0.85,0.88,0.92)});
-      y-=20;
-    });
-    page.drawText("Generated in the official schedule's line structure. Estimate for review; verify before filing.",{x:40,y:40,size:7.5,font:font,color:gray});
-  }
-
-  window.__downloadPacket=async function(btn){
-    if(typeof PDFLib==="undefined"){ alert("PDF library still loading — try again."); return; }
-    var label=btn?btn.textContent:""; if(btn){ btn.textContent="Building packet…"; btn.disabled=true; }
-    try{
-      var inp=toInput(), r=TaxEngine.computeTax(inp);
-      var name=((f.firstName||"")+" "+(f.lastName||"")).trim()||"Taxpayer";
-      var out=await PDFLib.PDFDocument.create();
-      var font=await out.embedFont(PDFLib.StandardFonts.Helvetica);
-      var bold=await out.embedFont(PDFLib.StandardFonts.HelveticaBold);
-      var rgb=PDFLib.rgb, navy=rgb(0.09,0.15,0.33);
-
-      // Filled official 1040
-      var filled=await fill1040Doc(inp, r);
-      var fdoc=await PDFLib.PDFDocument.load(await filled.save());
-      var pgs=await out.copyPages(fdoc, fdoc.getPageIndices());
-      pgs.forEach(function(p){ out.addPage(p); });
-      var included=["Form 1040"];
-
-      // Generated schedules
-      var scheds=schedulesFor(inp, r);
-      for(var i=0;i<scheds.length;i++){ await drawSchedulePage(out, scheds[i], font, bold, name); included.push(scheds[i].title+" — "+scheds[i].sub); }
-
-      // Coversheet at the front
-      var cover=out.insertPage(0,[612,792]);
-      cover.drawRectangle({x:0,y:722,width:612,height:70,color:navy});
-      cover.drawText("Free Tax Calculator",{x:40,y:756,size:20,font:bold,color:rgb(1,1,1)});
-      cover.drawText("2025 Filing Packet — Form Checklist",{x:40,y:736,size:11,font:font,color:rgb(0.8,0.85,0.95)});
-      var y=680;
-      cover.drawText("Included (filled) in this packet:",{x:40,y:y,size:12,font:bold,color:navy}); y-=22;
-      included.forEach(function(t){ cover.drawText("[x]  "+t,{x:48,y:y,size:10.5,font:font,color:rgb(0.13,0.5,0.42)}); y-=16; });
-      cover.drawText("Free Tax Calculator — Estimate for review; not filed with the IRS.",{x:40,y:40,size:8,font:font,color:rgb(0.4,0.4,0.4)});
-
-      dl(await out.save(), "Filing-Packet-2025.pdf");
-    }catch(e){ alert("Could not build the packet: "+e.message); }
-    finally{ if(btn){ btn.textContent=label; btn.disabled=false; } }
-  };
-
-  // ============================ MULTI-ENTITY HOME ============================
-  var SVG={
-    person:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
-    brief:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>',
-    building:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>',
-    store:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1-5h14l1 5M4 9v11h16V9M9 20v-6h6v6"/></svg>',
-    partners:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M2.5 20c0-3 2.5-5 5.5-5M21.5 20c0-3-2.5-5-5.5-5"/></svg>',
-    bank:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5M4 9v9M9 9v9M15 9v9M20 9v9M3 21h18"/></svg>',
-    ribbon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M9 12l-2 9 5-3 5 3-2-9"/></svg>'
-  };
-  var ENTITIES=[
-    { key:"individual", et:null, svg:SVG.person, c:"#23366b", bg:"#e8effb", title:"Individual", form:"Form 1040", desc:"Employees, families, retirees, and investors filing a personal return." },
-    { key:"individual", et:"se", svg:SVG.brief, c:"#21806b", bg:"#e6f5ef", title:"Self-Employed", form:"1040 + Schedule C", desc:"Freelancers, gig workers, and sole proprietors." },
-    { key:"business", et:"c_corp", svg:SVG.building, c:"#3f51b5", bg:"#eaecfa", title:"C Corporation", form:"Form 1120", desc:"Corporations taxed at a flat 21% at the entity level." },
-    { key:"business", et:"s_corp", svg:SVG.store, c:"#c1671f", bg:"#fdf1e7", title:"S Corporation", form:"Form 1120-S", desc:"Pass-through income reported to owners on Schedule K-1." },
-    { key:"business", et:"partnership", svg:SVG.partners, c:"#6c3fb0", bg:"#f3ecfb", title:"Partnership / LLC", form:"Form 1065", desc:"Multi-owner pass-through with K-1 allocations." },
-    { key:"business", et:"trust", svg:SVG.bank, c:"#47566f", bg:"#eef0f7", title:"Estate & Trust", form:"Form 1041", desc:"Fiduciary returns using the compressed trust brackets." },
-    { key:"business", et:"nonprofit", svg:SVG.ribbon, c:"#2a8a5f", bg:"#e6f5ef", title:"Nonprofit", form:"Form 990 / 990-T", desc:"Tax-exempt organizations; 21% only on unrelated business income." }
-  ];
-  function renderHome(){
-    var cards=ENTITIES.map(function(e,i){
-      return '<div class="ecard" onclick="window.__pick('+i+')">'+
-        '<div class="ico" style="background:'+e.bg+';color:'+e.c+'">'+e.svg+'</div>'+
-        '<div class="form">'+e.form+'</div>'+
-        '<h3>'+e.title+'</h3><p>'+e.desc+'</p>'+
-        '<div class="go">Start →</div></div>';
-    }).join("");
-    var bars=[["\u{1F512}","100% private","Runs in your browser — your data never leaves your device"],
-      ["✓","Free for 2025","No signup, no paywall"],
-      ["\u{1F9EE}","Accurate","2025 IRS figures · 90+ built-in tax tests"]];
-    var trust=bars.map(function(b){return '<div class="tbar-item"><span class="tbar-ico">'+b[0]+'</span><div><b>'+b[1]+'</b><span>'+b[2]+'</span></div></div>';}).join("");
-    el("home").innerHTML=
-      '<div class="hero"><div class="badge">2025 Federal Tax Year</div>'+
-      '<h1>Who’s filing this year?</h1>'+
-      '<p>Pick your filer type and we’ll do the math, fill the forms, and hand you a ready-to-file PDF — all in your browser.</p></div>'+
-      '<div class="tbar">'+trust+'</div>'+
-      '<div class="entity-grid">'+cards+'</div>'+
-      '<div class="homefoot">Prepares your return for review and filing — it does not e-file to the IRS. Not affiliated with the IRS.</div>';
-  }
-  window.__pick=function(i){
-    var e=ENTITIES[i];
-    if(e.key==="individual"){ mode="individual"; if(e.et==="se"){ f.selfEmployedHint=true; } }
-    else { mode="business"; entityType=e.et; bf.entityType=e.et; }
-    step=0; renderApp();
-  };
-  window.__goHome=function(){ mode="home"; renderApp(); };
-
-  // ============================ BUSINESS WIZARD =============================
-  var bf={ entityType:null, isEstate:false, simpleTrust:false,
-    grossReceipts:"",costOfGoodsSold:"",operatingExpenses:"",taxableIncome:"",credits:"",
-    ordinaryBusinessIncome:"",
-    o1n:"Owner 1",o1p:"",o2n:"Owner 2",o2p:"",o3n:"Owner 3",o3p:"",
-    totalIncome:"",deductions:"",incomeDistributionDeduction:"",
-    unrelatedBusinessIncome:"",estimatedPayments:"" };
-  function bToInput(){
-    var t=bf.entityType==="trust"&&bf.isEstate?"estate":bf.entityType;
-    var inp={ entityType:t,
-      grossReceipts:n(bf.grossReceipts),costOfGoodsSold:n(bf.costOfGoodsSold),operatingExpenses:n(bf.operatingExpenses),
-      taxableIncome:n(bf.taxableIncome),credits:n(bf.credits),
-      ordinaryBusinessIncome:n(bf.ordinaryBusinessIncome),
-      totalIncome:n(bf.totalIncome),deductions:n(bf.deductions),incomeDistributionDeduction:n(bf.incomeDistributionDeduction),
-      simpleTrust:bf.simpleTrust,
-      unrelatedBusinessIncome:n(bf.unrelatedBusinessIncome),estimatedPayments:n(bf.estimatedPayments) };
-    if(t==="s_corp"||t==="partnership"){
-      var owners=[];
-      [[bf.o1n,bf.o1p],[bf.o2n,bf.o2p],[bf.o3n,bf.o3p]].forEach(function(o){ if(n(o[1])) owners.push({name:o[0],percent:n(o[1])}); });
-      inp.owners=owners.length?owners:[{name:"Owner 1",percent:100}];
-    }
-    return inp;
-  }
-  function bfield(label,key,opts){ opts=opts||{};var type=opts.type||"number";
-    return '<div class="field"><label>'+label+'</label><input data-bkey="'+key+'" type="'+type+'" '+(type==="number"?'min="0" inputmode="decimal" placeholder="0"':'')+' value="'+(bf[key]!=null?String(bf[key]).replace(/"/g,"&quot;"):"")+'"></div>';
-  }
-  function renderBusiness(){
-    var et=bf.entityType, title=ENTITIES.filter(function(e){return e.et===et;})[0];
-    var body='<span class="backlink" onclick="window.__goHome()">← Change filer type</span>'+
-      '<h2>'+(title?title.title:"Business")+' <span style="font-weight:400;color:var(--muted);font-size:14px">'+(title?title.form:"")+'</span></h2>';
-    if(et==="c_corp"){
-      body+='<p style="font-size:13px;color:var(--muted)">Enter your income and expenses, or a taxable income figure directly.</p>'+
-        '<div class="row">'+bfield("Gross receipts or sales","grossReceipts")+bfield("Cost of goods sold","costOfGoodsSold")+'</div>'+
-        bfield("Operating expenses (total deductions)","operatingExpenses")+
-        bfield("Or enter taxable income directly (optional)","taxableIncome")+
-        '<div class="row">'+bfield("Tax credits","credits")+bfield("Estimated tax payments","estimatedPayments")+'</div>';
-    } else if(et==="s_corp"||et==="partnership"){
-      body+='<p style="font-size:13px;color:var(--muted)">Pass-through: the entity owes no federal income tax. We compute each owner’s Schedule K-1 share.</p>'+
-        '<div class="row">'+bfield("Gross receipts or sales","grossReceipts")+bfield("Cost of goods sold","costOfGoodsSold")+'</div>'+
-        bfield("Operating expenses","operatingExpenses")+
-        bfield("Or ordinary business income directly (optional)","ordinaryBusinessIncome")+
-        '<h2 style="font-size:15px;margin-top:16px">Owners (Schedule K-1)</h2>'+
-        '<div class="row">'+bfield("Owner 1 name","o1n",{type:"text"})+bfield("Owner 1 %","o1p")+'</div>'+
-        '<div class="row">'+bfield("Owner 2 name","o2n",{type:"text"})+bfield("Owner 2 %","o2p")+'</div>'+
-        '<div class="row">'+bfield("Owner 3 name","o3n",{type:"text"})+bfield("Owner 3 %","o3p")+'</div>';
-    } else if(et==="trust"){
-      body+='<label class="chk"><input type="checkbox" data-bkey="isEstate"'+(bf.isEstate?" checked":"")+'> This is an estate (uncheck for a trust)</label>'+
-        '<label class="chk"><input type="checkbox" data-bkey="simpleTrust"'+(bf.simpleTrust?" checked":"")+'> Simple trust ($300 exemption)</label>'+
-        bfield("Total income","totalIncome")+
-        bfield("Deductions","deductions")+
-        bfield("Income distribution deduction (to beneficiaries)","incomeDistributionDeduction")+
-        bfield("Estimated tax payments","estimatedPayments");
-    } else if(et==="nonprofit"){
-      body+='<p style="font-size:13px;color:var(--muted)">Exempt-function income is not taxed. Enter any unrelated business income (UBTI) for the 21% UBIT (Form 990-T).</p>'+
-        bfield("Unrelated business taxable income (UBTI)","unrelatedBusinessIncome")+
-        bfield("Estimated tax payments","estimatedPayments");
-    }
-    var r=BusinessEngine.computeBusinessTax(bToInput());
-    var rows=r.lineItems.map(function(li){ return '<tr><td class="ln">'+li[0]+'</td><td>'+li[1]+'</td><td class="amt">'+(li[2]===""?"":usd(li[2],2))+'</td></tr>'; }).join("");
-    var k1="";
-    if(r.k1){ k1='<h2 style="font-size:15px;margin-top:14px">Schedule K-1 — each owner’s share</h2>'+
-      r.k1.map(function(o){ return '<div class="k1card"><b>'+o.name+'</b> ('+o.percent+'%): '+usd(o.ordinaryIncomeShare,2)+' ordinary business income<br><span style="font-size:12px;color:var(--muted)">'+o.seTaxNote+'</span></div>'; }).join(""); }
-    var notes=(r.notes||[]).map(function(x){return '<div class="note" style="margin-top:8px">'+x+'</div>';}).join("");
-    body+='<h2 style="font-size:15px;margin-top:18px">Result</h2><table><tbody>'+rows+'</tbody></table>'+k1+notes+
-      '<div class="actions noprint" style="margin-top:16px;gap:10px;justify-content:flex-start;flex-wrap:wrap">'+
-      '<button class="btn" onclick="window.__downloadBusinessForm(this)">Download filled '+(title?title.form:"form")+' (PDF)</button>'+
-      '<button class="btn ghost" onclick="window.print()">Print view</button></div>';
-    el("panel").innerHTML=body;
-    // bind business inputs
-    Array.prototype.forEach.call(el("panel").querySelectorAll("[data-bkey]"),function(inp){
-      var key=inp.getAttribute("data-bkey"), ev=(inp.type==="checkbox")?"change":"input";
-      inp.addEventListener(ev,function(){ bf[key]=inp.type==="checkbox"?inp.checked:inp.value; renderBusiness(); });
-    });
-    // business summary sidebar
-    var isRefund = (typeof r.refundOwed==="number") ? r.refundOwed>=0 : true;
-    var big = (typeof r.totalTax==="number") ? usd(r.totalTax) : usd(0);
-    el("summary").innerHTML='<h3>'+r.entity+'</h3>'+
-      '<div class="big" style="color:var(--navy)">'+big+'</div>'+
-      '<div style="color:var(--muted);font-size:13px;margin-bottom:12px">'+(r.entityLevelTax===0&&!r.totalTax?"No entity-level federal tax":"Estimated total tax")+'</div>'+
-      (typeof r.taxableIncome==="number"?line("Taxable income",r.taxableIncome):"")+
-      (typeof r.ordinaryBusinessIncome==="number"?line("Ordinary business income",r.ordinaryBusinessIncome):"")+
-      (typeof r.refundOwed==="number"?line(r.refundOwed>=0?"Refund":"Balance due",Math.abs(r.refundOwed)):"");
-  }
-
-  // ---- Filled business-form PDF (official line structure) ----
-  var FORM_NO={ c_corp:"Form 1120", s_corp:"Form 1120-S", partnership:"Form 1065", trust:"Form 1041", estate:"Form 1041", nonprofit:"Form 990-T" };
-  window.__downloadBusinessForm=async function(btn){
-    if(typeof PDFLib==="undefined"){ alert("PDF library still loading — try again."); return; }
-    var label=btn?btn.textContent:""; if(btn){ btn.textContent="Generating…"; btn.disabled=true; }
-    try{
-      var inp=bToInput(), r=BusinessEngine.computeBusinessTax(inp);
-      var formNo=FORM_NO[inp.entityType]||"Business return";
-      var doc=await PDFLib.PDFDocument.create();
-      var font=await doc.embedFont(PDFLib.StandardFonts.Helvetica);
-      var bold=await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
-      var rgb=PDFLib.rgb, navy=rgb(0.09,0.15,0.33), gray=rgb(0.4,0.4,0.4);
-      var page=doc.addPage([612,792]), y=748;
-      page.drawText(formNo,{x:40,y:y,size:18,font:bold,color:navy});
-      page.drawText("2025",{x:540,y:y,size:16,font:bold,color:navy});
-      y-=18; page.drawText(r.entity,{x:40,y:y,size:10,font:font,color:gray});
-      y-=6; page.drawLine({start:{x:40,y:y},end:{x:572,y:y},thickness:1.5,color:navy}); y-=22;
-      r.lineItems.forEach(function(li){
-        var emph=/Total|Taxable income|Refund|Balance|Ordinary business/i.test(li[1]||li[0]);
-        var ff=emph?bold:font;
-        page.drawText(String(li[0]),{x:44,y:y,size:9,font:font,color:gray});
-        page.drawText(String(li[1]),{x:96,y:y,size:10,font:ff,color:emph?navy:rgb(0.15,0.15,0.15)});
-        if(li[2]!==""){ var t=usd(li[2],2), w=ff.widthOfTextAtSize(t,10); page.drawText(t,{x:572-w,y:y,size:10,font:ff,color:emph?navy:rgb(0.15,0.15,0.15)}); }
-        page.drawLine({start:{x:40,y:y-5},end:{x:572,y:y-5},thickness:0.4,color:rgb(0.85,0.88,0.92)}); y-=20;
-      });
-      if(r.k1){
-        y-=10; page.drawText("Schedule K-1 — owner allocations",{x:40,y:y,size:12,font:bold,color:navy}); y-=20;
-        r.k1.forEach(function(o){
-          page.drawText(o.name+" ("+o.percent+"%)",{x:48,y:y,size:10,font:font,color:rgb(0.15,0.15,0.15)});
-          var t=usd(o.ordinaryIncomeShare,2), w=font.widthOfTextAtSize(t,10);
-          page.drawText(t,{x:572-w,y:y,size:10,font:bold,color:navy}); y-=18;
-        });
-      }
-      (r.notes||[]).forEach(function(nt){
-        y-=6; var words=nt.split(" "), lineStr="";
-        words.forEach(function(wd){ if((lineStr+" "+wd).length>95){ page.drawText(lineStr,{x:40,y:y,size:8,font:font,color:gray}); y-=11; lineStr=wd; } else lineStr+=" "+wd; });
-        if(lineStr){ page.drawText(lineStr.trim(),{x:40,y:y,size:8,font:font,color:gray}); y-=11; }
-      });
-      page.drawText("Generated in the official "+formNo+" line structure. Estimate for review; verify before filing. Not e-filed.",{x:40,y:36,size:7.5,font:font,color:gray});
-      dl(await doc.save(), formNo.replace(/[^A-Za-z0-9]/g,"-")+"-2025.pdf");
-    }catch(e){ alert("Could not generate the form: "+e.message); }
-    finally{ if(btn){ btn.textContent=label; btn.disabled=false; } }
-  };
-
-  // ============================ APP DISPATCHER ==============================
-  function renderApp(){
-    if(mode==="home"){ el("home").style.display=""; el("filer").style.display="none"; renderHome(); return; }
-    el("home").style.display="none"; el("filer").style.display="";
-    if(mode==="business"){ el("steps").style.display="none"; renderBusiness(); }
-    else { el("steps").style.display=""; render(); }
-  }
-
-  renderApp();
-})();
+// ═══════════════════ INIT ═══════════════════
+updateStdDedDisplay();
 </script>
+
+<footer class="disclaimer" style="background:#fff;border-top:1px solid var(--border)">
+  For estimation purposes only. Not tax advice. Not affiliated with the IRS. Does not e-file. Always consult a qualified tax professional for your specific situation.
+</footer>
 </body>
 </html>

@@ -209,9 +209,55 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0}
   .lp-ctable{font-size:12px}
   .lp-ctable td,.lp-ctable th{padding:8px 10px}
 }
+
+/* ─── SIGN-UP GATE MODAL ─── */
+#su-overlay{position:fixed;inset:0;background:rgba(10,20,35,.82);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+#su-overlay.open{display:flex}
+#su-card{background:#fff;border-radius:16px;padding:40px 36px;width:100%;max-width:440px;box-shadow:0 24px 64px rgba(0,0,0,.28)}
+.su-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.su-logo-mark{width:34px;height:34px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;letter-spacing:-.5px}
+.su-logo-name{font-size:16px;font-weight:700;color:var(--navy)}
+.su-h1{font-size:21px;font-weight:700;color:var(--navy);margin:0 0 6px}
+.su-sub{font-size:13.5px;color:#64748b;margin:0 0 22px;line-height:1.55}
+.su-field{margin-bottom:14px}
+.su-field label{display:block;font-size:11px;font-weight:700;color:#374151;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.su-field input{width:100%;padding:11px 14px;border:1.5px solid #d0d5dd;border-radius:8px;font-size:15px;color:#111;box-sizing:border-box;transition:border-color .15s;font-family:inherit}
+.su-field input:focus{outline:none;border-color:#14b8a6}
+.su-btn{width:100%;padding:13px;background:#14b8a6;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;transition:background .15s;font-family:inherit}
+.su-btn:hover{background:#0d9488}
+.su-btn:disabled{background:#94a3b8;cursor:default}
+.su-err{color:#dc2626;font-size:13px;margin-bottom:8px;display:none}
+.su-privacy{font-size:12px;color:#94a3b8;text-align:center;margin-top:14px;line-height:1.5}
+.su-existing{font-size:13px;text-align:center;margin-top:10px;color:#64748b}
+.su-existing button{background:none;border:none;color:#14b8a6;cursor:pointer;text-decoration:underline;font-size:13px;font-family:inherit}
+@media(max-width:480px){#su-card{padding:28px 20px}.su-h1{font-size:19px}}
 </style>
 </head>
 <body>
+
+<!-- ── SIGN-UP GATE MODAL ── -->
+<div id="su-overlay">
+  <div id="su-card">
+    <div class="su-logo">
+      <div class="su-logo-mark">TP</div>
+      <span class="su-logo-name">TaxFilePro</span>
+    </div>
+    <h1 class="su-h1">Create your free account</h1>
+    <p class="su-sub">Get unlimited access to all 7 return types — individual, LLC, S&nbsp;Corp, nonprofit. Free forever. No credit card.</p>
+    <div class="su-field">
+      <label for="su-name">Your name <span style="color:#94a3b8;font-weight:400;text-transform:none">(optional)</span></label>
+      <input type="text" id="su-name" placeholder="Jane Smith" autocomplete="name">
+    </div>
+    <div class="su-field">
+      <label for="su-email">Email address</label>
+      <input type="email" id="su-email" placeholder="jane@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')submitSignup()">
+    </div>
+    <div class="su-err" id="su-err">Please enter a valid email address.</div>
+    <button class="su-btn" id="su-btn" onclick="submitSignup()">Get free access →</button>
+    <p class="su-privacy">🔒 We never sell your data. Your tax numbers stay 100% in your browser.</p>
+    <p class="su-existing">Already have an account? <button onclick="suRestoreAccess()">Sign in</button></p>
+  </div>
+</div>
 
 <header>
   <div>
@@ -1025,7 +1071,66 @@ const fmt = (n) => new Intl.NumberFormat('en-US', {style:'currency', currency:'U
 const n = (id) => { const el = document.getElementById(id); if (!el) return 0; const v = parseFloat(el.value); return isNaN(v) ? 0 : v; };
 const max0 = (x) => Math.max(0, x);
 
-function showView(idx) {
+// ─── SIGN-UP GATE ───────────────────────────────────────────────
+const SU_WEBHOOK = 'https://billmai.app.n8n.cloud/webhook/taxfilepro-signup';
+let _suPendingView = null;
+
+function suIsSignedIn() { return !!localStorage.getItem('tfp_email'); }
+
+function suOpen(targetView) {
+  _suPendingView = targetView;
+  document.getElementById('su-overlay').classList.add('open');
+  setTimeout(() => { const e = document.getElementById('su-email'); if (e) e.focus(); }, 80);
+}
+
+function suClose() { document.getElementById('su-overlay').classList.remove('open'); }
+
+async function submitSignup() {
+  const emailEl = document.getElementById('su-email');
+  const nameEl  = document.getElementById('su-name');
+  const errEl   = document.getElementById('su-err');
+  const btn     = document.getElementById('su-btn');
+  const email   = emailEl.value.trim();
+  const name    = nameEl.value.trim();
+
+  if (!email || !email.includes('@') || !email.includes('.')) {
+    errEl.style.display = 'block';
+    emailEl.focus();
+    return;
+  }
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Opening TaxFilePro…';
+
+  localStorage.setItem('tfp_email', email);
+  if (name) localStorage.setItem('tfp_name', name);
+
+  // Fire-and-forget to n8n — user proceeds regardless
+  fetch(SU_WEBHOOK, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, name })
+  }).catch(() => {});
+
+  setTimeout(() => {
+    suClose();
+    btn.disabled = false;
+    btn.textContent = 'Get free access →';
+    if (_suPendingView !== null) { _goToView(_suPendingView); _suPendingView = null; }
+  }, 350);
+}
+
+function suRestoreAccess() {
+  const email = prompt('Enter the email you signed up with:');
+  if (email && email.includes('@')) {
+    localStorage.setItem('tfp_email', email.trim());
+    suClose();
+    if (_suPendingView !== null) { _goToView(_suPendingView); _suPendingView = null; }
+  }
+}
+// ────────────────────────────────────────────────────────────────
+
+function _goToView(idx) {
   for (let i = 0; i <= 7; i++) {
     const el = document.getElementById('view' + i);
     if (el) el.classList.remove('active');
@@ -1042,6 +1147,11 @@ function showView(idx) {
     bct.textContent = titles[idx] || '';
   }
   window.scrollTo(0, 0);
+}
+
+function showView(idx) {
+  if (idx === 0) { _goToView(0); return; }
+  if (suIsSignedIn()) { _goToView(idx); } else { suOpen(idx); }
 }
 
 // ═══════════════════ FILING STATUS (View 1) ═══════════════════
